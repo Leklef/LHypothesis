@@ -7,17 +7,48 @@
 //
 
 import UIKit
+import LHypothesis
+
+enum TestAnalyticsEvent: AnalyticsEvent {
+  
+    case viewDidLoad
+    
+    var name: String {
+        switch self {
+        case .viewDidLoad:
+          return "viewDidLoad"
+        }
+    }
+    
+    var parameters: AnalyticsEventParameters? {
+        switch self {
+        case .viewDidLoad:
+          return nil
+        }
+    }
+    
+    var userProperties: AnalyticsEventUserProperties? {
+        switch self {
+        case .viewDidLoad:
+          return nil
+        }
+    }
+  
+}
 
 class ViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
-    }
-
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
+      
+        // 1: Register providers
+        Analytics.shared.register([FirebaseProvider(), AppsFlyerProvider()])
+      
+        // 2: Log event (by default log event for all providers)
+        Analytics.shared.log(event: TestAnalyticsEvent.viewDidLoad)
+      
+        // 2 `optional`: Log event for some providers
+        Analytics.shared.log(event: TestAnalyticsEvent.viewDidLoad, providersFilter: [FirebaseProvider.self])
     }
 
 }

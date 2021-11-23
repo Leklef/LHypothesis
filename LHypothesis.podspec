@@ -1,42 +1,41 @@
-#
-# Be sure to run `pod lib lint LHypothesis.podspec' to ensure this is a
-# valid spec before submitting.
-#
-# Any lines starting with a # are optional, but their use is encouraged
-# To learn more about a Podspec see https://guides.cocoapods.org/syntax/podspec.html
-#
-
 Pod::Spec.new do |s|
   s.name             = 'LHypothesis'
-  s.version          = '0.1.0'
-  s.summary          = 'A short description of LHypothesis.'
+  s.version          = '0.0.1'
+  s.summary          = 'Analytics abstraction layer for Swift.'
 
-# This description is used to generate tags and improve search results.
-#   * Think: What does it do? Why did you write it? What is the focus?
-#   * Try to keep it short, snappy and to the point.
-#   * Write the description between the DESC delimiters below.
-#   * Finally, don't worry about the indent, CocoaPods strips it!
-
-  s.description      = <<-DESC
-TODO: Add long description of the pod here.
-                       DESC
-
-  s.homepage         = 'https://github.com/lenar-craftmaster/LHypothesis'
-  # s.screenshots     = 'www.example.com/screenshots_1', 'www.example.com/screenshots_2'
+  s.homepage         = 'https://github.com/leklef/LHypothesis'
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
-  s.author           = { 'lenar-craftmaster' => 'lenar8553@gmail.com' }
-  s.source           = { :git => 'https://github.com/lenar-craftmaster/LHypothesis.git', :tag => s.version.to_s }
-  # s.social_media_url = 'https://twitter.com/<TWITTER_USERNAME>'
+  s.author           = { 'Lenar Gilyazov' => 'lenar8553@gmail.com' }
+  s.source           = { :git => 'https://github.com/leklef/LHypothesis.git', :tag => s.version.to_s }
+  s.social_media_url = 'https://twitter.com/lenar_gilyazov'
 
-  s.ios.deployment_target = '9.0'
+  s.swift_version    = "5.0"
+  s.static_framework = true
 
-  s.source_files = 'LHypothesis/Classes/**/*'
+  s.ios.deployment_target = '11.0'
+  s.tvos.deployment_target = '12.0'
+  s.osx.deployment_target = '10.15'
+
+  s.default_subspec = 'Core'
+
+  s.subspec 'Core' do |ss|
+    ss.source_files = 'LHypothesis/Classes/Core/*.swift'
+    
+    ss.frameworks = 'Foundation'
+  end
+
+  s.subspec 'Firebase' do |ss|
+    ss.source_files = 'LHypothesis/Classes/Providers/FirebaseProvider.swift'
+
+    ss.dependency 'LHypothesis/Core'
+    ss.dependency 'Firebase/Analytics'
+  end
+
+  s.subspec 'AppsFlyer' do |ss|
+    ss.source_files = 'LHypothesis/Classes/Providers/AppsFlyerProvider.swift'
+
+    ss.dependency 'LHypothesis/Core'
+    ss.dependency 'AppsFlyerFramework'
+  end
   
-  # s.resource_bundles = {
-  #   'LHypothesis' => ['LHypothesis/Assets/*.png']
-  # }
-
-  # s.public_header_files = 'Pod/Classes/**/*.h'
-  # s.frameworks = 'UIKit', 'MapKit'
-  # s.dependency 'AFNetworking', '~> 2.3'
 end
