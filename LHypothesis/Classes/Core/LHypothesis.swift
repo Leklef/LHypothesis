@@ -7,36 +7,48 @@
 
 import Foundation
 
-public final class Analytics {
+public enum Analytics {
   
-  public static let shared = Analytics()
+  static var providers: [AnalyticsProvider] = []
   
-  private var providers: [AnalyticsProvider] = []
-  
-  private init() {}
-  
-  public func register(_ provider: AnalyticsProvider) {
-    self.providers.append(provider)
+  public static func register(_ provider: AnalyticsProvider) {
+    Self.providers.append(provider)
   }
   
-  public func register(_ providers: [AnalyticsProvider]) {
-    self.providers.append(contentsOf: providers)
+  public static func register(_ providers: [AnalyticsProvider]) {
+    Self.providers.append(contentsOf: providers)
   }
   
-  public func log(event: AnalyticsEvent, providersFilter: [AnalyticsProvider.Type] = []) {
+  public static func removeAllProviders() {
+    Self.providers = []
+  }
+  
+  public static func log(event: AnalyticsEvent, providersFilter: [AnalyticsProvider.Type] = []) {
     if providersFilter.isEmpty {
-      providers.forEach {
+      Self.providers.forEach {
         $0.logEvent(event)
       }
     } else {
-      providers.filter { provider in providersFilter.contains(where: { type(of: provider as Any) == $0 }) }.forEach {
+      Self.providers.filter { provider in providersFilter.contains(where: { type(of: provider as Any) == $0 }) }.forEach {
         $0.logEvent(event)
       }
     }
   }
   
-  public func setUserId(_ userId: String?) {
-    providers.forEach {
+  public static func setUserProperty(_ property: String?, forName name: String, providersFilter: [AnalyticsProvider.Type] = []) {
+    if providersFilter.isEmpty {
+      Self.providers.forEach {
+        $0.setUserProperty(property, forName: name)
+      }
+    } else {
+      Self.providers.filter { provider in providersFilter.contains(where: { type(of: provider as Any) == $0 }) }.forEach {
+        $0.setUserProperty(property, forName: name)
+      }
+    }
+  }
+  
+  public static func setUserId(_ userId: String?) {
+    Self.providers.forEach {
       $0.setUserId(userId)
     }
   }
@@ -50,7 +62,8 @@ precedencegroup AnalyticalPrecedence {
 
 infix operator <<~: AnalyticalPrecedence
 
-public func <<~ (left: Analytics, right: AnalyticsProvider) -> Analytics {
+@discardableResult
+public func <<~ (left: Analytics.Type, right: AnalyticsProvider) -> Analytics.Type {
   left.register(right)
   return left
 }

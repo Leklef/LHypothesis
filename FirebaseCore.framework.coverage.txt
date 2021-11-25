@@ -1,0 +1,2557 @@
+/Users/lenar/Desktop/LHypothesis/Example/Pods/FirebaseCore/FirebaseCore/Sources/FIRAnalyticsConfiguration.m:
+    1|       |// Copyright 2017 Google
+    2|       |//
+    3|       |// Licensed under the Apache License, Version 2.0 (the "License");
+    4|       |// you may not use this file except in compliance with the License.
+    5|       |// You may obtain a copy of the License at
+    6|       |//
+    7|       |//      http://www.apache.org/licenses/LICENSE-2.0
+    8|       |//
+    9|       |// Unless required by applicable law or agreed to in writing, software
+   10|       |// distributed under the License is distributed on an "AS IS" BASIS,
+   11|       |// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   12|       |// See the License for the specific language governing permissions and
+   13|       |// limitations under the License.
+   14|       |
+   15|       |#import <Foundation/Foundation.h>
+   16|       |
+   17|       |#import "FirebaseCore/Sources/FIRAnalyticsConfiguration.h"
+   18|       |
+   19|       |#pragma clang diagnostic push
+   20|       |#pragma clang diagnostic ignored "-Wdeprecated-implementations"
+   21|       |@implementation FIRAnalyticsConfiguration
+   22|       |#pragma clang diagnostic pop
+   23|       |
+   24|      0|+ (FIRAnalyticsConfiguration *)sharedInstance {
+   25|      0|  static FIRAnalyticsConfiguration *sharedInstance = nil;
+   26|      0|  static dispatch_once_t onceToken;
+   27|      0|  dispatch_once(&onceToken, ^{
+   28|      0|    sharedInstance = [[FIRAnalyticsConfiguration alloc] init];
+   29|      0|  });
+   30|      0|  return sharedInstance;
+   31|      0|}
+   32|       |
+   33|      0|- (void)postNotificationName:(NSString *)name value:(id)value {
+   34|      0|  if (!name.length || !value) {
+   35|      0|    return;
+   36|      0|  }
+   37|      0|  [[NSNotificationCenter defaultCenter] postNotificationName:name
+   38|      0|                                                      object:self
+   39|      0|                                                    userInfo:@{name : value}];
+   40|      0|}
+   41|       |
+   42|      0|- (void)setAnalyticsCollectionEnabled:(BOOL)analyticsCollectionEnabled {
+   43|      0|  [self setAnalyticsCollectionEnabled:analyticsCollectionEnabled persistSetting:YES];
+   44|      0|}
+   45|       |
+   46|       |- (void)setAnalyticsCollectionEnabled:(BOOL)analyticsCollectionEnabled
+   47|      0|                       persistSetting:(BOOL)shouldPersist {
+   48|       |  // Persist the measurementEnabledState. Use FIRAnalyticsEnabledState values instead of YES/NO.
+   49|      0|  FIRAnalyticsEnabledState analyticsEnabledState =
+   50|      0|      analyticsCollectionEnabled ? kFIRAnalyticsEnabledStateSetYes : kFIRAnalyticsEnabledStateSetNo;
+   51|      0|  if (shouldPersist) {
+   52|      0|    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+   53|      0|    [userDefaults setObject:@(analyticsEnabledState)
+   54|      0|                     forKey:kFIRAPersistedConfigMeasurementEnabledStateKey];
+   55|      0|    [userDefaults synchronize];
+   56|      0|  }
+   57|       |
+   58|      0|  [self postNotificationName:kFIRAnalyticsConfigurationSetEnabledNotification
+   59|      0|                       value:@(analyticsCollectionEnabled)];
+   60|      0|}
+   61|       |
+   62|       |@end
+
+/Users/lenar/Desktop/LHypothesis/Example/Pods/FirebaseCore/FirebaseCore/Sources/FIRApp.m:
+    1|       |// Copyright 2017 Google
+    2|       |//
+    3|       |// Licensed under the Apache License, Version 2.0 (the "License");
+    4|       |// you may not use this file except in compliance with the License.
+    5|       |// You may obtain a copy of the License at
+    6|       |//
+    7|       |//      http://www.apache.org/licenses/LICENSE-2.0
+    8|       |//
+    9|       |// Unless required by applicable law or agreed to in writing, software
+   10|       |// distributed under the License is distributed on an "AS IS" BASIS,
+   11|       |// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   12|       |// See the License for the specific language governing permissions and
+   13|       |// limitations under the License.
+   14|       |
+   15|       |#include <sys/utsname.h>
+   16|       |
+   17|       |#if __has_include(<UIKit/UIKit.h>)
+   18|       |#import <UIKit/UIKit.h>
+   19|       |#endif
+   20|       |
+   21|       |#if __has_include(<AppKit/AppKit.h>)
+   22|       |#import <AppKit/AppKit.h>
+   23|       |#endif
+   24|       |
+   25|       |#import "FirebaseCore/Sources/Public/FirebaseCore/FIRApp.h"
+   26|       |
+   27|       |#import "FirebaseCore/Sources/FIRAnalyticsConfiguration.h"
+   28|       |#import "FirebaseCore/Sources/FIRBundleUtil.h"
+   29|       |#import "FirebaseCore/Sources/FIRComponentContainerInternal.h"
+   30|       |#import "FirebaseCore/Sources/FIRConfigurationInternal.h"
+   31|       |#import "FirebaseCore/Sources/FIRFirebaseUserAgent.h"
+   32|       |
+   33|       |#import "FirebaseCore/Sources/Private/FIRAppInternal.h"
+   34|       |#import "FirebaseCore/Sources/Private/FIRCoreDiagnosticsConnector.h"
+   35|       |#import "FirebaseCore/Sources/Private/FIRLibrary.h"
+   36|       |#import "FirebaseCore/Sources/Private/FIRLogger.h"
+   37|       |#import "FirebaseCore/Sources/Private/FIROptionsInternal.h"
+   38|       |#import "FirebaseCore/Sources/Public/FirebaseCore/FIRVersion.h"
+   39|       |
+   40|       |#import <GoogleUtilities/GULAppEnvironmentUtil.h>
+   41|       |
+   42|       |#import <objc/runtime.h>
+   43|       |
+   44|       |// The kFIRService strings are only here while transitioning CoreDiagnostics from the Analytics
+   45|       |// pod to a Core dependency. These symbols are not used and should be deleted after the transition.
+   46|       |NSString *const kFIRServiceAdMob;
+   47|       |NSString *const kFIRServiceAuth;
+   48|       |NSString *const kFIRServiceAuthUI;
+   49|       |NSString *const kFIRServiceCrash;
+   50|       |NSString *const kFIRServiceDatabase;
+   51|       |NSString *const kFIRServiceDynamicLinks;
+   52|       |NSString *const kFIRServiceFirestore;
+   53|       |NSString *const kFIRServiceFunctions;
+   54|       |NSString *const kFIRServiceInstanceID;
+   55|       |NSString *const kFIRServiceInvites;
+   56|       |NSString *const kFIRServiceMessaging;
+   57|       |NSString *const kFIRServiceMeasurement;
+   58|       |NSString *const kFIRServicePerformance;
+   59|       |NSString *const kFIRServiceRemoteConfig;
+   60|       |NSString *const kFIRServiceStorage;
+   61|       |NSString *const kGGLServiceAnalytics;
+   62|       |NSString *const kGGLServiceSignIn;
+   63|       |
+   64|       |NSString *const kFIRDefaultAppName = @"__FIRAPP_DEFAULT";
+   65|       |NSString *const kFIRAppReadyToConfigureSDKNotification = @"FIRAppReadyToConfigureSDKNotification";
+   66|       |NSString *const kFIRAppDeleteNotification = @"FIRAppDeleteNotification";
+   67|       |NSString *const kFIRAppIsDefaultAppKey = @"FIRAppIsDefaultAppKey";
+   68|       |NSString *const kFIRAppNameKey = @"FIRAppNameKey";
+   69|       |NSString *const kFIRGoogleAppIDKey = @"FIRGoogleAppIDKey";
+   70|       |
+   71|       |NSString *const kFIRGlobalAppDataCollectionEnabledDefaultsKeyFormat =
+   72|       |    @"/google/firebase/global_data_collection_enabled:%@";
+   73|       |NSString *const kFIRGlobalAppDataCollectionEnabledPlistKey =
+   74|       |    @"FirebaseDataCollectionDefaultEnabled";
+   75|       |
+   76|       |NSString *const kFIRAppDiagnosticsConfigurationTypeKey = @"ConfigType";
+   77|       |NSString *const kFIRAppDiagnosticsErrorKey = @"Error";
+   78|       |NSString *const kFIRAppDiagnosticsFIRAppKey = @"FIRApp";
+   79|       |NSString *const kFIRAppDiagnosticsSDKNameKey = @"SDKName";
+   80|       |NSString *const kFIRAppDiagnosticsSDKVersionKey = @"SDKVersion";
+   81|       |NSString *const kFIRAppDiagnosticsApplePlatformPrefix = @"apple-platform";
+   82|       |
+   83|       |// Auth internal notification notification and key.
+   84|       |NSString *const FIRAuthStateDidChangeInternalNotification =
+   85|       |    @"FIRAuthStateDidChangeInternalNotification";
+   86|       |NSString *const FIRAuthStateDidChangeInternalNotificationAppKey =
+   87|       |    @"FIRAuthStateDidChangeInternalNotificationAppKey";
+   88|       |NSString *const FIRAuthStateDidChangeInternalNotificationTokenKey =
+   89|       |    @"FIRAuthStateDidChangeInternalNotificationTokenKey";
+   90|       |NSString *const FIRAuthStateDidChangeInternalNotificationUIDKey =
+   91|       |    @"FIRAuthStateDidChangeInternalNotificationUIDKey";
+   92|       |
+   93|       |/**
+   94|       | * Error domain for exceptions and NSError construction.
+   95|       | */
+   96|       |NSString *const kFirebaseCoreErrorDomain = @"com.firebase.core";
+   97|       |
+   98|       |/** The NSUserDefaults suite name for FirebaseCore, for those storage locations that use it. */
+   99|       |NSString *const kFirebaseCoreDefaultsSuiteName = @"com.firebase.core";
+  100|       |
+  101|       |/**
+  102|       | * The URL to download plist files.
+  103|       | */
+  104|       |static NSString *const kPlistURL = @"https://console.firebase.google.com/";
+  105|       |
+  106|       |/**
+  107|       | * An array of all classes that registered as `FIRCoreConfigurable` in order to receive lifecycle
+  108|       | * events from Core.
+  109|       | */
+  110|       |static NSMutableArray<Class<FIRLibrary>> *sRegisteredAsConfigurable;
+  111|       |
+  112|       |@interface FIRApp ()
+  113|       |
+  114|       |#ifdef DEBUG
+  115|       |@property(nonatomic) BOOL alreadyOutputDataCollectionFlag;
+  116|       |#endif  // DEBUG
+  117|       |
+  118|       |@end
+  119|       |
+  120|       |@implementation FIRApp
+  121|       |
+  122|       |// This is necessary since our custom getter prevents `_options` from being created.
+  123|       |@synthesize options = _options;
+  124|       |
+  125|       |static NSMutableDictionary *sAllApps;
+  126|       |static FIRApp *sDefaultApp;
+  127|       |
+  128|      0|+ (void)configure {
+  129|      0|  FIROptions *options = [FIROptions defaultOptions];
+  130|      0|  if (!options) {
+  131|      0|    [NSException raise:kFirebaseCoreErrorDomain
+  132|      0|                format:@"`FirebaseApp.configure()` could not find "
+  133|      0|                       @"a valid GoogleService-Info.plist in your project. Please download one "
+  134|      0|                       @"from %@.",
+  135|      0|                       kPlistURL];
+  136|      0|  }
+  137|      0|  [FIRApp configureWithOptions:options];
+  138|      0|}
+  139|       |
+  140|      0|+ (void)configureWithOptions:(FIROptions *)options {
+  141|      0|  if (!options) {
+  142|      0|    [NSException raise:kFirebaseCoreErrorDomain
+  143|      0|                format:@"Options is nil. Please pass a valid options."];
+  144|      0|  }
+  145|      0|  [FIRApp configureWithName:kFIRDefaultAppName options:options];
+  146|      0|}
+  147|       |
+  148|      0|+ (NSCharacterSet *)applicationNameAllowedCharacters {
+  149|      0|  static NSCharacterSet *applicationNameAllowedCharacters;
+  150|      0|  static dispatch_once_t onceToken;
+  151|      0|  dispatch_once(&onceToken, ^{
+  152|      0|    NSMutableCharacterSet *allowedNameCharacters = [NSMutableCharacterSet alphanumericCharacterSet];
+  153|      0|    [allowedNameCharacters addCharactersInString:@"-_"];
+  154|      0|    applicationNameAllowedCharacters = [allowedNameCharacters copy];
+  155|      0|  });
+  156|      0|  return applicationNameAllowedCharacters;
+  157|      0|}
+  158|       |
+  159|      0|+ (void)configureWithName:(NSString *)name options:(FIROptions *)options {
+  160|      0|  if (!name || !options) {
+  161|      0|    [NSException raise:kFirebaseCoreErrorDomain format:@"Neither name nor options can be nil."];
+  162|      0|  }
+  163|      0|  if (name.length == 0) {
+  164|      0|    [NSException raise:kFirebaseCoreErrorDomain format:@"Name cannot be empty."];
+  165|      0|  }
+  166|       |
+  167|      0|  if ([name isEqualToString:kFIRDefaultAppName]) {
+  168|      0|    if (sDefaultApp) {
+  169|       |      // The default app already exists. Handle duplicate `configure` calls and return.
+  170|      0|      [self appWasConfiguredTwice:sDefaultApp usingOptions:options];
+  171|      0|      return;
+  172|      0|    }
+  173|       |
+  174|      0|    FIRLogDebug(kFIRLoggerCore, @"I-COR000001", @"Configuring the default app.");
+  175|      0|  } else {
+  176|       |    // Validate the app name and ensure it hasn't been configured already.
+  177|      0|    NSCharacterSet *nameCharacters = [NSCharacterSet characterSetWithCharactersInString:name];
+  178|       |
+  179|      0|    if (![[self applicationNameAllowedCharacters] isSupersetOfSet:nameCharacters]) {
+  180|      0|      [NSException raise:kFirebaseCoreErrorDomain
+  181|      0|                  format:@"App name can only contain alphanumeric, "
+  182|      0|                         @"hyphen (-), and underscore (_) characters"];
+  183|      0|    }
+  184|       |
+  185|      0|    @synchronized(self) {
+  186|      0|      if (sAllApps && sAllApps[name]) {
+  187|       |        // The app already exists. Handle a duplicate `configure` call and return.
+  188|      0|        [self appWasConfiguredTwice:sAllApps[name] usingOptions:options];
+  189|      0|        return;
+  190|      0|      }
+  191|      0|    }
+  192|       |
+  193|      0|    FIRLogDebug(kFIRLoggerCore, @"I-COR000002", @"Configuring app named %@", name);
+  194|      0|  }
+  195|       |
+  196|      0|  @synchronized(self) {
+  197|      0|    FIRApp *app = [[FIRApp alloc] initInstanceWithName:name options:options];
+  198|      0|    if (app.isDefaultApp) {
+  199|      0|      sDefaultApp = app;
+  200|      0|    }
+  201|       |
+  202|      0|    [FIRApp addAppToAppDictionary:app];
+  203|       |
+  204|       |    // The FIRApp instance is ready to go, `sDefaultApp` is assigned, other SDKs are now ready to be
+  205|       |    // instantiated.
+  206|      0|    [app.container instantiateEagerComponents];
+  207|      0|    [FIRApp sendNotificationsToSDKs:app];
+  208|      0|  }
+  209|      0|}
+  210|       |
+  211|       |/// Called when `configure` has been called multiple times for the same app. This can either throw
+  212|       |/// an exception (most cases) or ignore the duplicate configuration in situations where it's allowed
+  213|       |/// like an extension.
+  214|      0|+ (void)appWasConfiguredTwice:(FIRApp *)app usingOptions:(FIROptions *)options {
+  215|       |  // Only extensions should potentially be able to call `configure` more than once.
+  216|      0|  if (![GULAppEnvironmentUtil isAppExtension]) {
+  217|       |    // Throw an exception since this is now an invalid state.
+  218|      0|    if (app.isDefaultApp) {
+  219|      0|      [NSException raise:kFirebaseCoreErrorDomain
+  220|      0|                  format:@"Default app has already been configured."];
+  221|      0|    } else {
+  222|      0|      [NSException raise:kFirebaseCoreErrorDomain
+  223|      0|                  format:@"App named %@ has already been configured.", app.name];
+  224|      0|    }
+  225|      0|  }
+  226|       |
+  227|       |  // In an extension, the entry point could be called multiple times. As long as the options are
+  228|       |  // identical we should allow multiple `configure` calls.
+  229|      0|  if ([options isEqual:app.options]) {
+  230|       |    // Everything is identical but the extension's lifecycle triggered `configure` twice.
+  231|       |    // Ignore duplicate calls and return since everything should still be in a valid state.
+  232|      0|    FIRLogDebug(kFIRLoggerCore, @"I-COR000035",
+  233|      0|                @"Ignoring second `configure` call in an extension.");
+  234|      0|    return;
+  235|      0|  } else {
+  236|      0|    [NSException raise:kFirebaseCoreErrorDomain
+  237|      0|                format:@"App named %@ has already been configured.", app.name];
+  238|      0|  }
+  239|      0|}
+  240|       |
+  241|      0|+ (FIRApp *)defaultApp {
+  242|      0|  if (sDefaultApp) {
+  243|      0|    return sDefaultApp;
+  244|      0|  }
+  245|      0|  FIRLogError(kFIRLoggerCore, @"I-COR000003",
+  246|      0|              @"The default Firebase app has not yet been "
+  247|      0|              @"configured. Add `FirebaseApp.configure()` to your "
+  248|      0|              @"application initialization. This can be done in "
+  249|      0|              @"in the App Delegate's application(_:didFinishLaunchingWithOptions:)` "
+  250|      0|              @"(or the `@main` struct's initializer in SwiftUI). "
+  251|      0|              @"Read more: https://goo.gl/ctyzm8.");
+  252|      0|  return nil;
+  253|      0|}
+  254|       |
+  255|      0|+ (FIRApp *)appNamed:(NSString *)name {
+  256|      0|  @synchronized(self) {
+  257|      0|    if (sAllApps) {
+  258|      0|      FIRApp *app = sAllApps[name];
+  259|      0|      if (app) {
+  260|      0|        return app;
+  261|      0|      }
+  262|      0|    }
+  263|      0|    FIRLogError(kFIRLoggerCore, @"I-COR000004", @"App with name %@ does not exist.", name);
+  264|      0|    return nil;
+  265|      0|  }
+  266|      0|}
+  267|       |
+  268|      0|+ (NSDictionary *)allApps {
+  269|      0|  @synchronized(self) {
+  270|      0|    if (!sAllApps) {
+  271|      0|      FIRLogError(kFIRLoggerCore, @"I-COR000005", @"No app has been configured yet.");
+  272|      0|    }
+  273|      0|    return [sAllApps copy];
+  274|      0|  }
+  275|      0|}
+  276|       |
+  277|       |// Public only for tests
+  278|      0|+ (void)resetApps {
+  279|      0|  @synchronized(self) {
+  280|      0|    sDefaultApp = nil;
+  281|      0|    [sAllApps removeAllObjects];
+  282|      0|    sAllApps = nil;
+  283|      0|    [[self userAgent] reset];
+  284|      0|  }
+  285|      0|}
+  286|       |
+  287|      0|- (void)deleteApp:(FIRAppVoidBoolCallback)completion {
+  288|      0|  @synchronized([self class]) {
+  289|      0|    if (sAllApps && sAllApps[self.name]) {
+  290|      0|      FIRLogDebug(kFIRLoggerCore, @"I-COR000006", @"Deleting app named %@", self.name);
+  291|       |
+  292|       |      // Remove all registered libraries from the container to avoid creating new instances.
+  293|      0|      [self.container removeAllComponents];
+  294|       |      // Remove all cached instances from the container before deleting the app.
+  295|      0|      [self.container removeAllCachedInstances];
+  296|       |
+  297|      0|      [sAllApps removeObjectForKey:self.name];
+  298|      0|      [self clearDataCollectionSwitchFromUserDefaults];
+  299|      0|      if ([self.name isEqualToString:kFIRDefaultAppName]) {
+  300|      0|        sDefaultApp = nil;
+  301|      0|      }
+  302|      0|      NSDictionary *appInfoDict = @{kFIRAppNameKey : self.name};
+  303|      0|      [[NSNotificationCenter defaultCenter] postNotificationName:kFIRAppDeleteNotification
+  304|      0|                                                          object:[self class]
+  305|      0|                                                        userInfo:appInfoDict];
+  306|      0|      completion(YES);
+  307|      0|    } else {
+  308|      0|      FIRLogError(kFIRLoggerCore, @"I-COR000007", @"App does not exist.");
+  309|      0|      completion(NO);
+  310|      0|    }
+  311|      0|  }
+  312|      0|}
+  313|       |
+  314|      0|+ (void)addAppToAppDictionary:(FIRApp *)app {
+  315|      0|  if (!sAllApps) {
+  316|      0|    sAllApps = [NSMutableDictionary dictionary];
+  317|      0|  }
+  318|      0|  if ([app configureCore]) {
+  319|      0|    sAllApps[app.name] = app;
+  320|      0|  } else {
+  321|      0|    [NSException raise:kFirebaseCoreErrorDomain
+  322|      0|                format:@"Configuration fails. It may be caused by an invalid GOOGLE_APP_ID in "
+  323|      0|                       @"GoogleService-Info.plist or set in the customized options."];
+  324|      0|  }
+  325|      0|}
+  326|       |
+  327|      0|- (instancetype)initInstanceWithName:(NSString *)name options:(FIROptions *)options {
+  328|      0|  self = [super init];
+  329|      0|  if (self) {
+  330|      0|    _name = [name copy];
+  331|      0|    _options = [options copy];
+  332|      0|    _options.editingLocked = YES;
+  333|      0|    _isDefaultApp = [name isEqualToString:kFIRDefaultAppName];
+  334|      0|    _container = [[FIRComponentContainer alloc] initWithApp:self];
+  335|      0|  }
+  336|      0|  return self;
+  337|      0|}
+  338|       |
+  339|      0|- (void)dealloc {
+  340|      0|  [[NSNotificationCenter defaultCenter] removeObserver:self];
+  341|      0|}
+  342|       |
+  343|      0|- (BOOL)configureCore {
+  344|      0|  [self checkExpectedBundleID];
+  345|      0|  if (![self isAppIDValid]) {
+  346|      0|    return NO;
+  347|      0|  }
+  348|       |
+  349|       |  // Initialize the Analytics once there is a valid options under default app. Analytics should
+  350|       |  // always initialize first by itself before the other SDKs.
+  351|      0|  if ([self.name isEqualToString:kFIRDefaultAppName]) {
+  352|      0|    Class firAnalyticsClass = NSClassFromString(@"FIRAnalytics");
+  353|      0|    if (firAnalyticsClass) {
+  354|      0|#pragma clang diagnostic push
+  355|      0|#pragma clang diagnostic ignored "-Wundeclared-selector"
+  356|      0|      SEL startWithConfigurationSelector = @selector(startWithConfiguration:options:);
+  357|      0|#pragma clang diagnostic pop
+  358|      0|      if ([firAnalyticsClass respondsToSelector:startWithConfigurationSelector]) {
+  359|      0|#pragma clang diagnostic push
+  360|      0|#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+  361|      0|#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+  362|      0|        [firAnalyticsClass performSelector:startWithConfigurationSelector
+  363|      0|                                withObject:[FIRConfiguration sharedInstance].analyticsConfiguration
+  364|      0|                                withObject:_options];
+  365|      0|#pragma clang diagnostic pop
+  366|      0|      }
+  367|      0|    }
+  368|      0|  }
+  369|       |
+  370|      0|  [self subscribeForAppDidBecomeActiveNotifications];
+  371|       |
+  372|      0|  return YES;
+  373|      0|}
+  374|       |
+  375|      0|- (FIROptions *)options {
+  376|      0|  return [_options copy];
+  377|      0|}
+  378|       |
+  379|      0|- (void)setDataCollectionDefaultEnabled:(BOOL)dataCollectionDefaultEnabled {
+  380|      0|#ifdef DEBUG
+  381|      0|  FIRLogDebug(kFIRLoggerCore, @"I-COR000034", @"Explicitly %@ data collection flag.",
+  382|      0|              dataCollectionDefaultEnabled ? @"enabled" : @"disabled");
+  383|      0|  self.alreadyOutputDataCollectionFlag = YES;
+  384|      0|#endif  // DEBUG
+  385|       |
+  386|      0|  NSString *key =
+  387|      0|      [NSString stringWithFormat:kFIRGlobalAppDataCollectionEnabledDefaultsKeyFormat, self.name];
+  388|      0|  [[NSUserDefaults standardUserDefaults] setBool:dataCollectionDefaultEnabled forKey:key];
+  389|       |
+  390|       |  // Core also controls the FirebaseAnalytics flag, so check if the Analytics flags are set
+  391|       |  // within FIROptions and change the Analytics value if necessary. Analytics only works with the
+  392|       |  // default app, so return if this isn't the default app.
+  393|      0|  if (!self.isDefaultApp) {
+  394|      0|    return;
+  395|      0|  }
+  396|       |
+  397|       |  // Check if the Analytics flag is explicitly set. If so, no further actions are necessary.
+  398|      0|  if ([self.options isAnalyticsCollectionExplicitlySet]) {
+  399|      0|    return;
+  400|      0|  }
+  401|       |
+  402|       |  // The Analytics flag has not been explicitly set, so update with the value being set.
+  403|      0|#pragma clang diagnostic push
+  404|      0|#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+  405|      0|  [[FIRAnalyticsConfiguration sharedInstance]
+  406|      0|      setAnalyticsCollectionEnabled:dataCollectionDefaultEnabled
+  407|      0|                     persistSetting:NO];
+  408|      0|#pragma clang diagnostic pop
+  409|      0|}
+  410|       |
+  411|      0|- (BOOL)isDataCollectionDefaultEnabled {
+  412|       |  // Check if it's been manually set before in code, and use that as the higher priority value.
+  413|      0|  NSNumber *defaultsObject = [[self class] readDataCollectionSwitchFromUserDefaultsForApp:self];
+  414|      0|  if (defaultsObject != nil) {
+  415|      0|#ifdef DEBUG
+  416|      0|    if (!self.alreadyOutputDataCollectionFlag) {
+  417|      0|      FIRLogDebug(kFIRLoggerCore, @"I-COR000031", @"Data Collection flag is %@ in user defaults.",
+  418|      0|                  [defaultsObject boolValue] ? @"enabled" : @"disabled");
+  419|      0|      self.alreadyOutputDataCollectionFlag = YES;
+  420|      0|    }
+  421|      0|#endif  // DEBUG
+  422|      0|    return [defaultsObject boolValue];
+  423|      0|  }
+  424|       |
+  425|       |  // Read the Info.plist to see if the flag is set. If it's not set, it should default to `YES`.
+  426|       |  // As per the implementation of `readDataCollectionSwitchFromPlist`, it's a cached value and has
+  427|       |  // no performance impact calling multiple times.
+  428|      0|  NSNumber *collectionEnabledPlistValue = [[self class] readDataCollectionSwitchFromPlist];
+  429|      0|  if (collectionEnabledPlistValue != nil) {
+  430|      0|#ifdef DEBUG
+  431|      0|    if (!self.alreadyOutputDataCollectionFlag) {
+  432|      0|      FIRLogDebug(kFIRLoggerCore, @"I-COR000032", @"Data Collection flag is %@ in plist.",
+  433|      0|                  [collectionEnabledPlistValue boolValue] ? @"enabled" : @"disabled");
+  434|      0|      self.alreadyOutputDataCollectionFlag = YES;
+  435|      0|    }
+  436|      0|#endif  // DEBUG
+  437|      0|    return [collectionEnabledPlistValue boolValue];
+  438|      0|  }
+  439|       |
+  440|      0|#ifdef DEBUG
+  441|      0|  if (!self.alreadyOutputDataCollectionFlag) {
+  442|      0|    FIRLogDebug(kFIRLoggerCore, @"I-COR000033", @"Data Collection flag is not set.");
+  443|      0|    self.alreadyOutputDataCollectionFlag = YES;
+  444|      0|  }
+  445|      0|#endif  // DEBUG
+  446|      0|  return YES;
+  447|      0|}
+  448|       |
+  449|       |#pragma mark - private
+  450|       |
+  451|      0|+ (void)sendNotificationsToSDKs:(FIRApp *)app {
+  452|       |  // TODO: Remove this notification once all SDKs are registered with `FIRCoreConfigurable`.
+  453|      0|  NSNumber *isDefaultApp = [NSNumber numberWithBool:app.isDefaultApp];
+  454|      0|  NSDictionary *appInfoDict = @{
+  455|      0|    kFIRAppNameKey : app.name,
+  456|      0|    kFIRAppIsDefaultAppKey : isDefaultApp,
+  457|      0|    kFIRGoogleAppIDKey : app.options.googleAppID
+  458|      0|  };
+  459|      0|  [[NSNotificationCenter defaultCenter] postNotificationName:kFIRAppReadyToConfigureSDKNotification
+  460|      0|                                                      object:self
+  461|      0|                                                    userInfo:appInfoDict];
+  462|       |
+  463|       |  // This is the new way of sending information to SDKs.
+  464|       |  // TODO: Do we want this on a background thread, maybe?
+  465|      0|  @synchronized(self) {
+  466|      0|    for (Class<FIRLibrary> library in sRegisteredAsConfigurable) {
+  467|      0|      [library configureWithApp:app];
+  468|      0|    }
+  469|      0|  }
+  470|      0|}
+  471|       |
+  472|      0|+ (NSError *)errorForMissingOptions {
+  473|      0|  NSDictionary *errorDict = @{
+  474|      0|    NSLocalizedDescriptionKey :
+  475|      0|        @"Unable to parse GoogleService-Info.plist in order to configure services.",
+  476|      0|    NSLocalizedRecoverySuggestionErrorKey :
+  477|      0|        @"Check formatting and location of GoogleService-Info.plist."
+  478|      0|  };
+  479|      0|  return [NSError errorWithDomain:kFirebaseCoreErrorDomain code:-100 userInfo:errorDict];
+  480|      0|}
+  481|       |
+  482|      0|+ (NSError *)errorForInvalidAppID {
+  483|      0|  NSDictionary *errorDict = @{
+  484|      0|    NSLocalizedDescriptionKey : @"Unable to validate Google App ID",
+  485|      0|    NSLocalizedRecoverySuggestionErrorKey :
+  486|      0|        @"Check formatting and location of GoogleService-Info.plist or GoogleAppID set in the "
+  487|      0|        @"customized options."
+  488|      0|  };
+  489|      0|  return [NSError errorWithDomain:kFirebaseCoreErrorDomain code:-101 userInfo:errorDict];
+  490|      0|}
+  491|       |
+  492|      3|+ (BOOL)isDefaultAppConfigured {
+  493|      3|  return (sDefaultApp != nil);
+  494|      3|}
+  495|       |
+  496|      2|+ (void)registerLibrary:(nonnull NSString *)name withVersion:(nonnull NSString *)version {
+  497|       |  // Create the set of characters which aren't allowed, only if this feature is used.
+  498|      2|  NSMutableCharacterSet *allowedSet = [NSMutableCharacterSet alphanumericCharacterSet];
+  499|      2|  [allowedSet addCharactersInString:@"-_."];
+  500|      2|  NSCharacterSet *disallowedSet = [allowedSet invertedSet];
+  501|       |  // Make sure the library name and version strings do not contain unexpected characters, and
+  502|       |  // add the name/version pair to the dictionary.
+  503|      2|  if ([name rangeOfCharacterFromSet:disallowedSet].location == NSNotFound &&
+  504|      2|      [version rangeOfCharacterFromSet:disallowedSet].location == NSNotFound) {
+  505|      2|    [[self userAgent] setValue:version forComponent:name];
+  506|      0|  } else {
+  507|      0|    FIRLogError(kFIRLoggerCore, @"I-COR000027",
+  508|      0|                @"The library name (%@) or version number (%@) contain invalid characters. "
+  509|      0|                @"Only alphanumeric, dash, underscore and period characters are allowed.",
+  510|      0|                name, version);
+  511|      0|  }
+  512|      2|}
+  513|       |
+  514|       |+ (void)registerInternalLibrary:(nonnull Class<FIRLibrary>)library
+  515|      1|                       withName:(nonnull NSString *)name {
+  516|      1|  [self registerInternalLibrary:library withName:name withVersion:FIRFirebaseVersion()];
+  517|      1|}
+  518|       |
+  519|       |+ (void)registerInternalLibrary:(nonnull Class<FIRLibrary>)library
+  520|       |                       withName:(nonnull NSString *)name
+  521|      2|                    withVersion:(nonnull NSString *)version {
+  522|       |  // This is called at +load time, keep the work to a minimum.
+  523|       |
+  524|       |  // Ensure the class given conforms to the proper protocol.
+  525|      2|  if (![(Class)library conformsToProtocol:@protocol(FIRLibrary)] ||
+  526|      2|      ![(Class)library respondsToSelector:@selector(componentsToRegister)]) {
+  527|      0|    [NSException raise:NSInvalidArgumentException
+  528|      0|                format:@"Class %@ attempted to register components, but it does not conform to "
+  529|      0|                       @"`FIRLibrary or provide a `componentsToRegister:` method.",
+  530|      0|                       library];
+  531|      0|  }
+  532|       |
+  533|      2|  [FIRComponentContainer registerAsComponentRegistrant:library];
+  534|      2|  if ([(Class)library respondsToSelector:@selector(configureWithApp:)]) {
+  535|      0|    static dispatch_once_t onceToken;
+  536|      0|    dispatch_once(&onceToken, ^{
+  537|      0|      sRegisteredAsConfigurable = [[NSMutableArray alloc] init];
+  538|      0|    });
+  539|      0|    @synchronized(self) {
+  540|      0|      [sRegisteredAsConfigurable addObject:library];
+  541|      0|    }
+  542|      0|  }
+  543|      2|  [self registerLibrary:name withVersion:version];
+  544|      2|}
+  545|       |
+  546|      2|+ (FIRFirebaseUserAgent *)userAgent {
+  547|      2|  static dispatch_once_t onceToken;
+  548|      2|  static FIRFirebaseUserAgent *_userAgent;
+  549|      1|  dispatch_once(&onceToken, ^{
+  550|      1|    _userAgent = [[FIRFirebaseUserAgent alloc] init];
+  551|      1|    [_userAgent setValue:FIRFirebaseVersion() forComponent:@"fire-ios"];
+  552|      1|  });
+  553|      2|  return _userAgent;
+  554|      2|}
+  555|       |
+  556|      0|+ (NSString *)firebaseUserAgent {
+  557|      0|  return [[self userAgent] firebaseUserAgent];
+  558|      0|}
+  559|       |
+  560|      0|- (void)checkExpectedBundleID {
+  561|      0|  NSArray *bundles = [FIRBundleUtil relevantBundles];
+  562|      0|  NSString *expectedBundleID = [self expectedBundleID];
+  563|       |  // The checking is only done when the bundle ID is provided in the serviceInfo dictionary for
+  564|       |  // backward compatibility.
+  565|      0|  if (expectedBundleID != nil && ![FIRBundleUtil hasBundleIdentifierPrefix:expectedBundleID
+  566|      0|                                                                 inBundles:bundles]) {
+  567|      0|    FIRLogError(kFIRLoggerCore, @"I-COR000008",
+  568|      0|                @"The project's Bundle ID is inconsistent with "
+  569|      0|                @"either the Bundle ID in '%@.%@', or the Bundle ID in the options if you are "
+  570|      0|                @"using a customized options. To ensure that everything can be configured "
+  571|      0|                @"correctly, you may need to make the Bundle IDs consistent. To continue with this "
+  572|      0|                @"plist file, you may change your app's bundle identifier to '%@'. Or you can "
+  573|      0|                @"download a new configuration file that matches your bundle identifier from %@ "
+  574|      0|                @"and replace the current one.",
+  575|      0|                kServiceInfoFileName, kServiceInfoFileType, expectedBundleID, kPlistURL);
+  576|      0|  }
+  577|      0|}
+  578|       |
+  579|       |#pragma mark - private - App ID Validation
+  580|       |
+  581|       |/**
+  582|       | * Validates the format and fingerprint of the app ID contained in GOOGLE_APP_ID in the plist file.
+  583|       | * This is the main method for validating app ID.
+  584|       | *
+  585|       | * @return YES if the app ID fulfills the expected format and fingerprint, NO otherwise.
+  586|       | */
+  587|      0|- (BOOL)isAppIDValid {
+  588|      0|  NSString *appID = _options.googleAppID;
+  589|      0|  BOOL isValid = [FIRApp validateAppID:appID];
+  590|      0|  if (!isValid) {
+  591|      0|    NSString *expectedBundleID = [self expectedBundleID];
+  592|      0|    FIRLogError(kFIRLoggerCore, @"I-COR000009",
+  593|      0|                @"The GOOGLE_APP_ID either in the plist file "
+  594|      0|                @"'%@.%@' or the one set in the customized options is invalid. If you are using "
+  595|      0|                @"the plist file, use the iOS version of bundle identifier to download the file, "
+  596|      0|                @"and do not manually edit the GOOGLE_APP_ID. You may change your app's bundle "
+  597|      0|                @"identifier to '%@'. Or you can download a new configuration file that matches "
+  598|      0|                @"your bundle identifier from %@ and replace the current one.",
+  599|      0|                kServiceInfoFileName, kServiceInfoFileType, expectedBundleID, kPlistURL);
+  600|      0|  };
+  601|      0|  return isValid;
+  602|      0|}
+  603|       |
+  604|      0|+ (BOOL)validateAppID:(NSString *)appID {
+  605|       |  // Failing validation only occurs when we are sure we are looking at a V2 app ID and it does not
+  606|       |  // have a valid fingerprint, otherwise we just warn about the potential issue.
+  607|      0|  if (!appID.length) {
+  608|      0|    return NO;
+  609|      0|  }
+  610|       |
+  611|      0|  NSScanner *stringScanner = [NSScanner scannerWithString:appID];
+  612|      0|  stringScanner.charactersToBeSkipped = nil;
+  613|       |
+  614|      0|  NSString *appIDVersion;
+  615|      0|  if (![stringScanner scanCharactersFromSet:[NSCharacterSet decimalDigitCharacterSet]
+  616|      0|                                 intoString:&appIDVersion]) {
+  617|      0|    return NO;
+  618|      0|  }
+  619|       |
+  620|      0|  if (![stringScanner scanString:@":" intoString:NULL]) {
+  621|       |    // appIDVersion must be separated by ":"
+  622|      0|    return NO;
+  623|      0|  }
+  624|       |
+  625|      0|  NSArray *knownVersions = @[ @"1" ];
+  626|      0|  if (![knownVersions containsObject:appIDVersion]) {
+  627|       |    // Permit unknown yet properly formatted app ID versions.
+  628|      0|    FIRLogInfo(kFIRLoggerCore, @"I-COR000010", @"Unknown GOOGLE_APP_ID version: %@", appIDVersion);
+  629|      0|    return YES;
+  630|      0|  }
+  631|       |
+  632|      0|  if (![self validateAppIDFormat:appID withVersion:appIDVersion]) {
+  633|      0|    return NO;
+  634|      0|  }
+  635|       |
+  636|      0|  if (![self validateAppIDFingerprint:appID withVersion:appIDVersion]) {
+  637|      0|    return NO;
+  638|      0|  }
+  639|       |
+  640|      0|  return YES;
+  641|      0|}
+  642|       |
+  643|      0|+ (NSString *)actualBundleID {
+  644|      0|  return [[NSBundle mainBundle] bundleIdentifier];
+  645|      0|}
+  646|       |
+  647|       |/**
+  648|       | * Validates that the format of the app ID string is what is expected based on the supplied version.
+  649|       | * The version must end in ":".
+  650|       | *
+  651|       | * For v1 app ids the format is expected to be
+  652|       | * '<version #>:<project number>:ios:<fingerprint of bundle id>'.
+  653|       | *
+  654|       | * This method does not verify that the contents of the app id are correct, just that they fulfill
+  655|       | * the expected format.
+  656|       | *
+  657|       | * @param appID Contents of GOOGLE_APP_ID from the plist file.
+  658|       | * @param version Indicates what version of the app id format this string should be.
+  659|       | * @return YES if provided string fufills the expected format, NO otherwise.
+  660|       | */
+  661|      0|+ (BOOL)validateAppIDFormat:(NSString *)appID withVersion:(NSString *)version {
+  662|      0|  if (!appID.length || !version.length) {
+  663|      0|    return NO;
+  664|      0|  }
+  665|       |
+  666|      0|  NSScanner *stringScanner = [NSScanner scannerWithString:appID];
+  667|      0|  stringScanner.charactersToBeSkipped = nil;
+  668|       |
+  669|       |  // Skip version part
+  670|       |  // '*<version #>*:<project number>:ios:<fingerprint of bundle id>'
+  671|      0|  if (![stringScanner scanString:version intoString:NULL]) {
+  672|       |    // The version part is missing or mismatched
+  673|      0|    return NO;
+  674|      0|  }
+  675|       |
+  676|       |  // Validate version part (see part between '*' symbols below)
+  677|       |  // '<version #>*:*<project number>:ios:<fingerprint of bundle id>'
+  678|      0|  if (![stringScanner scanString:@":" intoString:NULL]) {
+  679|       |    // appIDVersion must be separated by ":"
+  680|      0|    return NO;
+  681|      0|  }
+  682|       |
+  683|       |  // Validate version part (see part between '*' symbols below)
+  684|       |  // '<version #>:*<project number>*:ios:<fingerprint of bundle id>'.
+  685|      0|  NSInteger projectNumber = NSNotFound;
+  686|      0|  if (![stringScanner scanInteger:&projectNumber]) {
+  687|       |    // NO project number found.
+  688|      0|    return NO;
+  689|      0|  }
+  690|       |
+  691|       |  // Validate version part (see part between '*' symbols below)
+  692|       |  // '<version #>:<project number>*:*ios:<fingerprint of bundle id>'.
+  693|      0|  if (![stringScanner scanString:@":" intoString:NULL]) {
+  694|       |    // The project number must be separated by ":"
+  695|      0|    return NO;
+  696|      0|  }
+  697|       |
+  698|       |  // Validate version part (see part between '*' symbols below)
+  699|       |  // '<version #>:<project number>:*ios*:<fingerprint of bundle id>'.
+  700|      0|  NSString *platform;
+  701|      0|  if (![stringScanner scanUpToString:@":" intoString:&platform]) {
+  702|      0|    return NO;
+  703|      0|  }
+  704|       |
+  705|      0|  if (![platform isEqualToString:@"ios"]) {
+  706|       |    // The platform must be @"ios"
+  707|      0|    return NO;
+  708|      0|  }
+  709|       |
+  710|       |  // Validate version part (see part between '*' symbols below)
+  711|       |  // '<version #>:<project number>:ios*:*<fingerprint of bundle id>'.
+  712|      0|  if (![stringScanner scanString:@":" intoString:NULL]) {
+  713|       |    // The platform must be separated by ":"
+  714|      0|    return NO;
+  715|      0|  }
+  716|       |
+  717|       |  // Validate version part (see part between '*' symbols below)
+  718|       |  // '<version #>:<project number>:ios:*<fingerprint of bundle id>*'.
+  719|      0|  unsigned long long fingerprint = NSNotFound;
+  720|      0|  if (![stringScanner scanHexLongLong:&fingerprint]) {
+  721|       |    // Fingerprint part is missing
+  722|      0|    return NO;
+  723|      0|  }
+  724|       |
+  725|      0|  if (!stringScanner.isAtEnd) {
+  726|       |    // There are not allowed characters in the fingerprint part
+  727|      0|    return NO;
+  728|      0|  }
+  729|       |
+  730|      0|  return YES;
+  731|      0|}
+  732|       |
+  733|       |/**
+  734|       | * Validates that the fingerprint of the app ID string is what is expected based on the supplied
+  735|       | * version.
+  736|       | *
+  737|       | * Note that the v1 hash algorithm is not permitted on the client and cannot be fully validated.
+  738|       | *
+  739|       | * @param appID Contents of GOOGLE_APP_ID from the plist file.
+  740|       | * @param version Indicates what version of the app id format this string should be.
+  741|       | * @return YES if provided string fufills the expected fingerprint and the version is known, NO
+  742|       | *         otherwise.
+  743|       | */
+  744|      0|+ (BOOL)validateAppIDFingerprint:(NSString *)appID withVersion:(NSString *)version {
+  745|       |  // Extract the supplied fingerprint from the supplied app ID.
+  746|       |  // This assumes the app ID format is the same for all known versions below. If the app ID format
+  747|       |  // changes in future versions, the tokenizing of the app ID format will need to take into account
+  748|       |  // the version of the app ID.
+  749|      0|  NSArray *components = [appID componentsSeparatedByString:@":"];
+  750|      0|  if (components.count != 4) {
+  751|      0|    return NO;
+  752|      0|  }
+  753|       |
+  754|      0|  NSString *suppliedFingerprintString = components[3];
+  755|      0|  if (!suppliedFingerprintString.length) {
+  756|      0|    return NO;
+  757|      0|  }
+  758|       |
+  759|      0|  uint64_t suppliedFingerprint;
+  760|      0|  NSScanner *scanner = [NSScanner scannerWithString:suppliedFingerprintString];
+  761|      0|  if (![scanner scanHexLongLong:&suppliedFingerprint]) {
+  762|      0|    return NO;
+  763|      0|  }
+  764|       |
+  765|      0|  if ([version isEqual:@"1"]) {
+  766|       |    // The v1 hash algorithm is not permitted on the client so the actual hash cannot be validated.
+  767|      0|    return YES;
+  768|      0|  }
+  769|       |
+  770|       |  // Unknown version.
+  771|      0|  return NO;
+  772|      0|}
+  773|       |
+  774|      0|- (NSString *)expectedBundleID {
+  775|      0|  return _options.bundleID;
+  776|      0|}
+  777|       |
+  778|       |// end App ID validation
+  779|       |
+  780|       |#pragma mark - Reading From Plist & User Defaults
+  781|       |
+  782|       |/**
+  783|       | * Clears the data collection switch from the standard NSUserDefaults for easier testing and
+  784|       | * readability.
+  785|       | */
+  786|      0|- (void)clearDataCollectionSwitchFromUserDefaults {
+  787|      0|  NSString *key =
+  788|      0|      [NSString stringWithFormat:kFIRGlobalAppDataCollectionEnabledDefaultsKeyFormat, self.name];
+  789|      0|  [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
+  790|      0|}
+  791|       |
+  792|       |/**
+  793|       | * Reads the data collection switch from the standard NSUserDefaults for easier testing and
+  794|       | * readability.
+  795|       | */
+  796|      0|+ (nullable NSNumber *)readDataCollectionSwitchFromUserDefaultsForApp:(FIRApp *)app {
+  797|       |  // Read the object in user defaults, and only return if it's an NSNumber.
+  798|      0|  NSString *key =
+  799|      0|      [NSString stringWithFormat:kFIRGlobalAppDataCollectionEnabledDefaultsKeyFormat, app.name];
+  800|      0|  id collectionEnabledDefaultsObject = [[NSUserDefaults standardUserDefaults] objectForKey:key];
+  801|      0|  if ([collectionEnabledDefaultsObject isKindOfClass:[NSNumber class]]) {
+  802|      0|    return collectionEnabledDefaultsObject;
+  803|      0|  }
+  804|       |
+  805|      0|  return nil;
+  806|      0|}
+  807|       |
+  808|       |/**
+  809|       | * Reads the data collection switch from the Info.plist for easier testing and readability. Will
+  810|       | * only read once from the plist and return the cached value.
+  811|       | */
+  812|      0|+ (nullable NSNumber *)readDataCollectionSwitchFromPlist {
+  813|      0|  static NSNumber *collectionEnabledPlistObject;
+  814|      0|  static dispatch_once_t onceToken;
+  815|      0|  dispatch_once(&onceToken, ^{
+  816|       |    // Read the data from the `Info.plist`, only assign it if it's there and an NSNumber.
+  817|      0|    id plistValue = [[NSBundle mainBundle]
+  818|      0|        objectForInfoDictionaryKey:kFIRGlobalAppDataCollectionEnabledPlistKey];
+  819|      0|    if (plistValue && [plistValue isKindOfClass:[NSNumber class]]) {
+  820|      0|      collectionEnabledPlistObject = (NSNumber *)plistValue;
+  821|      0|    }
+  822|      0|  });
+  823|       |
+  824|      0|  return collectionEnabledPlistObject;
+  825|      0|}
+  826|       |
+  827|       |#pragma mark - App Life Cycle
+  828|       |
+  829|      0|- (void)subscribeForAppDidBecomeActiveNotifications {
+  830|      0|#if TARGET_OS_IOS || TARGET_OS_TV
+  831|      0|  NSNotificationName notificationName = UIApplicationDidBecomeActiveNotification;
+  832|       |#elif TARGET_OS_OSX
+  833|       |  NSNotificationName notificationName = NSApplicationDidBecomeActiveNotification;
+  834|       |#endif
+  835|       |
+  836|      0|#if !TARGET_OS_WATCH
+  837|      0|  [[NSNotificationCenter defaultCenter] addObserver:self
+  838|      0|                                           selector:@selector(appDidBecomeActive:)
+  839|      0|                                               name:notificationName
+  840|      0|                                             object:nil];
+  841|      0|#endif
+  842|      0|}
+  843|       |
+  844|      0|- (void)appDidBecomeActive:(NSNotification *)notification {
+  845|      0|  [self logCoreTelemetryIfEnabled];
+  846|      0|}
+  847|       |
+  848|      0|- (void)logCoreTelemetryIfEnabled {
+  849|      0|  if ([self isDataCollectionDefaultEnabled]) {
+  850|      0|    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
+  851|      0|      [FIRCoreDiagnosticsConnector logCoreTelemetryWithOptions:[self options]];
+  852|      0|    });
+  853|      0|  }
+  854|      0|}
+  855|       |
+  856|       |@end
+
+/Users/lenar/Desktop/LHypothesis/Example/Pods/FirebaseCore/FirebaseCore/Sources/FIRAppAssociationRegistration.m:
+    1|       |// Copyright 2017 Google
+    2|       |//
+    3|       |// Licensed under the Apache License, Version 2.0 (the "License");
+    4|       |// you may not use this file except in compliance with the License.
+    5|       |// You may obtain a copy of the License at
+    6|       |//
+    7|       |//      http://www.apache.org/licenses/LICENSE-2.0
+    8|       |//
+    9|       |// Unless required by applicable law or agreed to in writing, software
+   10|       |// distributed under the License is distributed on an "AS IS" BASIS,
+   11|       |// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   12|       |// See the License for the specific language governing permissions and
+   13|       |// limitations under the License.
+   14|       |
+   15|       |#import "FirebaseCore/Sources/FIRAppAssociationRegistration.h"
+   16|       |
+   17|       |#import <objc/runtime.h>
+   18|       |
+   19|       |@implementation FIRAppAssociationRegistration
+   20|       |
+   21|       |+ (nullable id)registeredObjectWithHost:(id)host
+   22|       |                                    key:(NSString *)key
+   23|      0|                          creationBlock:(id _Nullable (^)(void))creationBlock {
+   24|      0|  @synchronized(self) {
+   25|      0|    SEL dictKey = @selector(registeredObjectWithHost:key:creationBlock:);
+   26|      0|    NSMutableDictionary<NSString *, id> *objectsByKey = objc_getAssociatedObject(host, dictKey);
+   27|      0|    if (!objectsByKey) {
+   28|      0|      objectsByKey = [[NSMutableDictionary alloc] init];
+   29|      0|      objc_setAssociatedObject(host, dictKey, objectsByKey, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+   30|      0|    }
+   31|      0|    id obj = objectsByKey[key];
+   32|      0|    NSValue *creationBlockBeingCalled = [NSValue valueWithPointer:dictKey];
+   33|      0|    if (obj) {
+   34|      0|      if ([creationBlockBeingCalled isEqual:obj]) {
+   35|      0|        [NSException raise:@"Reentering registeredObjectWithHost:key:creationBlock: not allowed"
+   36|      0|                    format:@"host: %@ key: %@", host, key];
+   37|      0|      }
+   38|      0|      return obj;
+   39|      0|    }
+   40|      0|    objectsByKey[key] = creationBlockBeingCalled;
+   41|      0|    obj = creationBlock();
+   42|      0|    objectsByKey[key] = obj;
+   43|      0|    return obj;
+   44|      0|  }
+   45|      0|}
+   46|       |
+   47|       |@end
+
+/Users/lenar/Desktop/LHypothesis/Example/Pods/FirebaseCore/FirebaseCore/Sources/FIRBundleUtil.m:
+    1|       |// Copyright 2017 Google
+    2|       |//
+    3|       |// Licensed under the Apache License, Version 2.0 (the "License");
+    4|       |// you may not use this file except in compliance with the License.
+    5|       |// You may obtain a copy of the License at
+    6|       |//
+    7|       |//      http://www.apache.org/licenses/LICENSE-2.0
+    8|       |//
+    9|       |// Unless required by applicable law or agreed to in writing, software
+   10|       |// distributed under the License is distributed on an "AS IS" BASIS,
+   11|       |// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   12|       |// See the License for the specific language governing permissions and
+   13|       |// limitations under the License.
+   14|       |
+   15|       |#import "FirebaseCore/Sources/FIRBundleUtil.h"
+   16|       |
+   17|       |#import <GoogleUtilities/GULAppEnvironmentUtil.h>
+   18|       |
+   19|       |@implementation FIRBundleUtil
+   20|       |
+   21|      0|+ (NSArray *)relevantBundles {
+   22|      0|  return @[ [NSBundle mainBundle], [NSBundle bundleForClass:[self class]] ];
+   23|      0|}
+   24|       |
+   25|       |+ (NSString *)optionsDictionaryPathWithResourceName:(NSString *)resourceName
+   26|       |                                        andFileType:(NSString *)fileType
+   27|      0|                                          inBundles:(NSArray *)bundles {
+   28|       |  // Loop through all bundles to find the config dict.
+   29|      0|  for (NSBundle *bundle in bundles) {
+   30|      0|    NSString *path = [bundle pathForResource:resourceName ofType:fileType];
+   31|       |    // Use the first one we find.
+   32|      0|    if (path) {
+   33|      0|      return path;
+   34|      0|    }
+   35|      0|  }
+   36|      0|  return nil;
+   37|      0|}
+   38|       |
+   39|      0|+ (NSArray *)relevantURLSchemes {
+   40|      0|  NSMutableArray *result = [[NSMutableArray alloc] init];
+   41|      0|  for (NSBundle *bundle in [[self class] relevantBundles]) {
+   42|      0|    NSArray *urlTypes = [bundle objectForInfoDictionaryKey:@"CFBundleURLTypes"];
+   43|      0|    for (NSDictionary *urlType in urlTypes) {
+   44|      0|      [result addObjectsFromArray:urlType[@"CFBundleURLSchemes"]];
+   45|      0|    }
+   46|      0|  }
+   47|      0|  return result;
+   48|      0|}
+   49|       |
+   50|      0|+ (BOOL)hasBundleIdentifierPrefix:(NSString *)bundleIdentifier inBundles:(NSArray *)bundles {
+   51|      0|  for (NSBundle *bundle in bundles) {
+   52|      0|    if ([bundle.bundleIdentifier isEqualToString:bundleIdentifier]) {
+   53|      0|      return YES;
+   54|      0|    }
+   55|       |
+   56|      0|    if ([GULAppEnvironmentUtil isAppExtension]) {
+   57|       |      // A developer could be using the same `FIROptions` for both their app and extension. Since
+   58|       |      // extensions have a suffix added to the bundleID, we consider a matching prefix as valid.
+   59|      0|      NSString *appBundleIDFromExtension =
+   60|      0|          [self bundleIdentifierByRemovingLastPartFrom:bundle.bundleIdentifier];
+   61|      0|      if ([appBundleIDFromExtension isEqualToString:bundleIdentifier]) {
+   62|      0|        return YES;
+   63|      0|      }
+   64|      0|    }
+   65|      0|  }
+   66|      0|  return NO;
+   67|      0|}
+   68|       |
+   69|      0|+ (NSString *)bundleIdentifierByRemovingLastPartFrom:(NSString *)bundleIdentifier {
+   70|      0|  NSString *bundleIDComponentsSeparator = @".";
+   71|       |
+   72|      0|  NSMutableArray<NSString *> *bundleIDComponents =
+   73|      0|      [[bundleIdentifier componentsSeparatedByString:bundleIDComponentsSeparator] mutableCopy];
+   74|      0|  [bundleIDComponents removeLastObject];
+   75|       |
+   76|      0|  return [bundleIDComponents componentsJoinedByString:bundleIDComponentsSeparator];
+   77|      0|}
+   78|       |
+   79|       |@end
+
+/Users/lenar/Desktop/LHypothesis/Example/Pods/FirebaseCore/FirebaseCore/Sources/FIRComponent.m:
+    1|       |/*
+    2|       | * Copyright 2018 Google
+    3|       | *
+    4|       | * Licensed under the Apache License, Version 2.0 (the "License");
+    5|       | * you may not use this file except in compliance with the License.
+    6|       | * You may obtain a copy of the License at
+    7|       | *
+    8|       | *      http://www.apache.org/licenses/LICENSE-2.0
+    9|       | *
+   10|       | * Unless required by applicable law or agreed to in writing, software
+   11|       | * distributed under the License is distributed on an "AS IS" BASIS,
+   12|       | * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   13|       | * See the License for the specific language governing permissions and
+   14|       | * limitations under the License.
+   15|       | */
+   16|       |
+   17|       |#import "FirebaseCore/Sources/Private/FIRComponent.h"
+   18|       |
+   19|       |#import "FirebaseCore/Sources/Private/FIRComponentContainer.h"
+   20|       |#import "FirebaseCore/Sources/Private/FIRDependency.h"
+   21|       |
+   22|       |@interface FIRComponent ()
+   23|       |
+   24|       |- (instancetype)initWithProtocol:(Protocol *)protocol
+   25|       |             instantiationTiming:(FIRInstantiationTiming)instantiationTiming
+   26|       |                    dependencies:(NSArray<FIRDependency *> *)dependencies
+   27|       |                   creationBlock:(FIRComponentCreationBlock)creationBlock;
+   28|       |
+   29|       |@end
+   30|       |
+   31|       |@implementation FIRComponent
+   32|       |
+   33|       |+ (instancetype)componentWithProtocol:(Protocol *)protocol
+   34|      0|                        creationBlock:(FIRComponentCreationBlock)creationBlock {
+   35|      0|  return [[FIRComponent alloc] initWithProtocol:protocol
+   36|      0|                            instantiationTiming:FIRInstantiationTimingLazy
+   37|      0|                                   dependencies:@[]
+   38|      0|                                  creationBlock:creationBlock];
+   39|      0|}
+   40|       |
+   41|       |+ (instancetype)componentWithProtocol:(Protocol *)protocol
+   42|       |                  instantiationTiming:(FIRInstantiationTiming)instantiationTiming
+   43|       |                         dependencies:(NSArray<FIRDependency *> *)dependencies
+   44|      0|                        creationBlock:(FIRComponentCreationBlock)creationBlock {
+   45|      0|  return [[FIRComponent alloc] initWithProtocol:protocol
+   46|      0|                            instantiationTiming:instantiationTiming
+   47|      0|                                   dependencies:dependencies
+   48|      0|                                  creationBlock:creationBlock];
+   49|      0|}
+   50|       |
+   51|       |- (instancetype)initWithProtocol:(Protocol *)protocol
+   52|       |             instantiationTiming:(FIRInstantiationTiming)instantiationTiming
+   53|       |                    dependencies:(NSArray<FIRDependency *> *)dependencies
+   54|      0|                   creationBlock:(FIRComponentCreationBlock)creationBlock {
+   55|      0|  self = [super init];
+   56|      0|  if (self) {
+   57|      0|    _protocol = protocol;
+   58|      0|    _instantiationTiming = instantiationTiming;
+   59|      0|    _dependencies = [dependencies copy];
+   60|      0|    _creationBlock = creationBlock;
+   61|      0|  }
+   62|      0|  return self;
+   63|      0|}
+   64|       |
+   65|       |@end
+
+/Users/lenar/Desktop/LHypothesis/Example/Pods/FirebaseCore/FirebaseCore/Sources/FIRComponentContainer.m:
+    1|       |/*
+    2|       | * Copyright 2018 Google
+    3|       | *
+    4|       | * Licensed under the Apache License, Version 2.0 (the "License");
+    5|       | * you may not use this file except in compliance with the License.
+    6|       | * You may obtain a copy of the License at
+    7|       | *
+    8|       | *      http://www.apache.org/licenses/LICENSE-2.0
+    9|       | *
+   10|       | * Unless required by applicable law or agreed to in writing, software
+   11|       | * distributed under the License is distributed on an "AS IS" BASIS,
+   12|       | * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   13|       | * See the License for the specific language governing permissions and
+   14|       | * limitations under the License.
+   15|       | */
+   16|       |
+   17|       |#import "FirebaseCore/Sources/Private/FIRComponentContainer.h"
+   18|       |
+   19|       |#import "FirebaseCore/Sources/Private/FIRAppInternal.h"
+   20|       |#import "FirebaseCore/Sources/Private/FIRComponent.h"
+   21|       |#import "FirebaseCore/Sources/Private/FIRLibrary.h"
+   22|       |#import "FirebaseCore/Sources/Private/FIRLogger.h"
+   23|       |
+   24|       |NS_ASSUME_NONNULL_BEGIN
+   25|       |
+   26|       |@interface FIRComponentContainer ()
+   27|       |
+   28|       |/// The dictionary of components that are registered for a particular app. The key is an `NSString`
+   29|       |/// of the protocol.
+   30|       |@property(nonatomic, strong) NSMutableDictionary<NSString *, FIRComponentCreationBlock> *components;
+   31|       |
+   32|       |/// Cached instances of components that requested to be cached.
+   33|       |@property(nonatomic, strong) NSMutableDictionary<NSString *, id> *cachedInstances;
+   34|       |
+   35|       |/// Protocols of components that have requested to be eagerly instantiated.
+   36|       |@property(nonatomic, strong, nullable) NSMutableArray<Protocol *> *eagerProtocolsToInstantiate;
+   37|       |
+   38|       |@end
+   39|       |
+   40|       |@implementation FIRComponentContainer
+   41|       |
+   42|       |// Collection of all classes that register to provide components.
+   43|       |static NSMutableSet<Class> *sFIRComponentRegistrants;
+   44|       |
+   45|       |#pragma mark - Public Registration
+   46|       |
+   47|      2|+ (void)registerAsComponentRegistrant:(Class<FIRLibrary>)klass {
+   48|      2|  static dispatch_once_t onceToken;
+   49|      1|  dispatch_once(&onceToken, ^{
+   50|      1|    sFIRComponentRegistrants = [[NSMutableSet<Class> alloc] init];
+   51|      1|  });
+   52|       |
+   53|      2|  [self registerAsComponentRegistrant:klass inSet:sFIRComponentRegistrants];
+   54|      2|}
+   55|       |
+   56|       |+ (void)registerAsComponentRegistrant:(Class<FIRLibrary>)klass
+   57|      2|                                inSet:(NSMutableSet<Class> *)allRegistrants {
+   58|      2|  [allRegistrants addObject:klass];
+   59|      2|}
+   60|       |
+   61|       |#pragma mark - Internal Initialization
+   62|       |
+   63|      0|- (instancetype)initWithApp:(FIRApp *)app {
+   64|      0|  return [self initWithApp:app registrants:sFIRComponentRegistrants];
+   65|      0|}
+   66|       |
+   67|      0|- (instancetype)initWithApp:(FIRApp *)app registrants:(NSMutableSet<Class> *)allRegistrants {
+   68|      0|  self = [super init];
+   69|      0|  if (self) {
+   70|      0|    _app = app;
+   71|      0|    _cachedInstances = [NSMutableDictionary<NSString *, id> dictionary];
+   72|      0|    _components = [NSMutableDictionary<NSString *, FIRComponentCreationBlock> dictionary];
+   73|       |
+   74|      0|    [self populateComponentsFromRegisteredClasses:allRegistrants forApp:app];
+   75|      0|  }
+   76|      0|  return self;
+   77|      0|}
+   78|       |
+   79|      0|- (void)populateComponentsFromRegisteredClasses:(NSSet<Class> *)classes forApp:(FIRApp *)app {
+   80|       |  // Keep track of any components that need to eagerly instantiate after all components are added.
+   81|      0|  self.eagerProtocolsToInstantiate = [[NSMutableArray alloc] init];
+   82|       |
+   83|       |  // Loop through the verified component registrants and populate the components array.
+   84|      0|  for (Class<FIRLibrary> klass in classes) {
+   85|       |    // Loop through all the components being registered and store them as appropriate.
+   86|       |    // Classes which do not provide functionality should use a dummy FIRComponentRegistrant
+   87|       |    // protocol.
+   88|      0|    for (FIRComponent *component in [klass componentsToRegister]) {
+   89|       |      // Check if the component has been registered before, and error out if so.
+   90|      0|      NSString *protocolName = NSStringFromProtocol(component.protocol);
+   91|      0|      if (self.components[protocolName]) {
+   92|      0|        FIRLogError(kFIRLoggerCore, @"I-COR000029",
+   93|      0|                    @"Attempted to register protocol %@, but it already has an implementation.",
+   94|      0|                    protocolName);
+   95|      0|        continue;
+   96|      0|      }
+   97|       |
+   98|       |      // Store the creation block for later usage.
+   99|      0|      self.components[protocolName] = component.creationBlock;
+  100|       |
+  101|       |      // Queue any protocols that should be eagerly instantiated. Don't instantiate them yet
+  102|       |      // because they could depend on other components that haven't been added to the components
+  103|       |      // array yet.
+  104|      0|      BOOL shouldInstantiateEager =
+  105|      0|          (component.instantiationTiming == FIRInstantiationTimingAlwaysEager);
+  106|      0|      BOOL shouldInstantiateDefaultEager =
+  107|      0|          (component.instantiationTiming == FIRInstantiationTimingEagerInDefaultApp &&
+  108|      0|           [app isDefaultApp]);
+  109|      0|      if (shouldInstantiateEager || shouldInstantiateDefaultEager) {
+  110|      0|        [self.eagerProtocolsToInstantiate addObject:component.protocol];
+  111|      0|      }
+  112|      0|    }
+  113|      0|  }
+  114|      0|}
+  115|       |
+  116|       |#pragma mark - Instance Creation
+  117|       |
+  118|      0|- (void)instantiateEagerComponents {
+  119|       |  // After all components are registered, instantiate the ones that are requesting eager
+  120|       |  // instantiation.
+  121|      0|  @synchronized(self) {
+  122|      0|    for (Protocol *protocol in self.eagerProtocolsToInstantiate) {
+  123|       |      // Get an instance for the protocol, which will instantiate it since it couldn't have been
+  124|       |      // cached yet. Ignore the instance coming back since we don't need it.
+  125|      0|      __unused id unusedInstance = [self instanceForProtocol:protocol];
+  126|      0|    }
+  127|       |
+  128|       |    // All eager instantiation is complete, clear the stored property now.
+  129|      0|    self.eagerProtocolsToInstantiate = nil;
+  130|      0|  }
+  131|      0|}
+  132|       |
+  133|       |/// Instantiate an instance of a class that conforms to the specified protocol.
+  134|       |/// This will:
+  135|       |///   - Call the block to create an instance if possible,
+  136|       |///   - Validate that the instance returned conforms to the protocol it claims to,
+  137|       |///   - Cache the instance if the block requests it
+  138|       |///
+  139|       |/// Note that this method assumes the caller already has @sychronized on self.
+  140|       |- (nullable id)instantiateInstanceForProtocol:(Protocol *)protocol
+  141|      0|                                    withBlock:(FIRComponentCreationBlock)creationBlock {
+  142|      0|  if (!creationBlock) {
+  143|      0|    return nil;
+  144|      0|  }
+  145|       |
+  146|       |  // Create an instance using the creation block.
+  147|      0|  BOOL shouldCache = NO;
+  148|      0|  id instance = creationBlock(self, &shouldCache);
+  149|      0|  if (!instance) {
+  150|      0|    return nil;
+  151|      0|  }
+  152|       |
+  153|       |  // An instance was created, validate that it conforms to the protocol it claims to.
+  154|      0|  NSString *protocolName = NSStringFromProtocol(protocol);
+  155|      0|  if (![instance conformsToProtocol:protocol]) {
+  156|      0|    FIRLogError(kFIRLoggerCore, @"I-COR000030",
+  157|      0|                @"An instance conforming to %@ was requested, but the instance provided does not "
+  158|      0|                @"conform to the protocol",
+  159|      0|                protocolName);
+  160|      0|  }
+  161|       |
+  162|       |  // The instance is ready to be returned, but check if it should be cached first before returning.
+  163|      0|  if (shouldCache) {
+  164|      0|    self.cachedInstances[protocolName] = instance;
+  165|      0|  }
+  166|       |
+  167|      0|  return instance;
+  168|      0|}
+  169|       |
+  170|       |#pragma mark - Internal Retrieval
+  171|       |
+  172|      0|- (nullable id)instanceForProtocol:(Protocol *)protocol {
+  173|       |  // Check if there is a cached instance, and return it if so.
+  174|      0|  NSString *protocolName = NSStringFromProtocol(protocol);
+  175|       |
+  176|      0|  id cachedInstance;
+  177|      0|  @synchronized(self) {
+  178|      0|    cachedInstance = self.cachedInstances[protocolName];
+  179|      0|    if (!cachedInstance) {
+  180|       |      // Use the creation block to instantiate an instance and return it.
+  181|      0|      FIRComponentCreationBlock creationBlock = self.components[protocolName];
+  182|      0|      cachedInstance = [self instantiateInstanceForProtocol:protocol withBlock:creationBlock];
+  183|      0|    }
+  184|      0|  }
+  185|      0|  return cachedInstance;
+  186|      0|}
+  187|       |
+  188|       |#pragma mark - Lifecycle
+  189|       |
+  190|      0|- (void)removeAllCachedInstances {
+  191|      0|  @synchronized(self) {
+  192|       |    // Loop through the cache and notify each instance that is a maintainer to clean up after
+  193|       |    // itself.
+  194|      0|    for (id instance in self.cachedInstances.allValues) {
+  195|      0|      if ([instance conformsToProtocol:@protocol(FIRComponentLifecycleMaintainer)] &&
+  196|      0|          [instance respondsToSelector:@selector(appWillBeDeleted:)]) {
+  197|      0|        [instance appWillBeDeleted:self.app];
+  198|      0|      }
+  199|      0|    }
+  200|       |
+  201|       |    // Empty the cache.
+  202|      0|    [self.cachedInstances removeAllObjects];
+  203|      0|  }
+  204|      0|}
+  205|       |
+  206|      0|- (void)removeAllComponents {
+  207|      0|  @synchronized(self) {
+  208|      0|    [self.components removeAllObjects];
+  209|      0|  }
+  210|      0|}
+  211|       |
+  212|       |@end
+  213|       |
+  214|       |NS_ASSUME_NONNULL_END
+
+/Users/lenar/Desktop/LHypothesis/Example/Pods/FirebaseCore/FirebaseCore/Sources/FIRComponentType.m:
+    1|       |/*
+    2|       | * Copyright 2018 Google
+    3|       | *
+    4|       | * Licensed under the Apache License, Version 2.0 (the "License");
+    5|       | * you may not use this file except in compliance with the License.
+    6|       | * You may obtain a copy of the License at
+    7|       | *
+    8|       | *      http://www.apache.org/licenses/LICENSE-2.0
+    9|       | *
+   10|       | * Unless required by applicable law or agreed to in writing, software
+   11|       | * distributed under the License is distributed on an "AS IS" BASIS,
+   12|       | * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   13|       | * See the License for the specific language governing permissions and
+   14|       | * limitations under the License.
+   15|       | */
+   16|       |
+   17|       |#import "FirebaseCore/Sources/Private/FIRComponentType.h"
+   18|       |
+   19|       |#import "FirebaseCore/Sources/FIRComponentContainerInternal.h"
+   20|       |
+   21|       |@implementation FIRComponentType
+   22|       |
+   23|      0|+ (id)instanceForProtocol:(Protocol *)protocol inContainer:(FIRComponentContainer *)container {
+   24|       |  // Forward the call to the container.
+   25|      0|  return [container instanceForProtocol:protocol];
+   26|      0|}
+   27|       |
+   28|       |@end
+
+/Users/lenar/Desktop/LHypothesis/Example/Pods/FirebaseCore/FirebaseCore/Sources/FIRConfiguration.m:
+    1|       |// Copyright 2017 Google
+    2|       |//
+    3|       |// Licensed under the Apache License, Version 2.0 (the "License");
+    4|       |// you may not use this file except in compliance with the License.
+    5|       |// You may obtain a copy of the License at
+    6|       |//
+    7|       |//      http://www.apache.org/licenses/LICENSE-2.0
+    8|       |//
+    9|       |// Unless required by applicable law or agreed to in writing, software
+   10|       |// distributed under the License is distributed on an "AS IS" BASIS,
+   11|       |// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   12|       |// See the License for the specific language governing permissions and
+   13|       |// limitations under the License.
+   14|       |
+   15|       |#import "FirebaseCore/Sources/FIRConfigurationInternal.h"
+   16|       |
+   17|       |#import "FirebaseCore/Sources/FIRAnalyticsConfiguration.h"
+   18|       |
+   19|       |extern void FIRSetLoggerLevel(FIRLoggerLevel loggerLevel);
+   20|       |
+   21|       |@implementation FIRConfiguration
+   22|       |
+   23|      0|+ (instancetype)sharedInstance {
+   24|      0|  static FIRConfiguration *sharedInstance = nil;
+   25|      0|  static dispatch_once_t onceToken;
+   26|      0|  dispatch_once(&onceToken, ^{
+   27|      0|    sharedInstance = [[FIRConfiguration alloc] init];
+   28|      0|  });
+   29|      0|  return sharedInstance;
+   30|      0|}
+   31|       |
+   32|      0|- (instancetype)init {
+   33|      0|  self = [super init];
+   34|      0|  if (self) {
+   35|      0|    _analyticsConfiguration = [FIRAnalyticsConfiguration sharedInstance];
+   36|      0|  }
+   37|      0|  return self;
+   38|      0|}
+   39|       |
+   40|      0|- (void)setLoggerLevel:(FIRLoggerLevel)loggerLevel {
+   41|      0|  NSAssert(loggerLevel <= FIRLoggerLevelMax && loggerLevel >= FIRLoggerLevelMin,
+   42|      0|           @"Invalid logger level, %ld", (long)loggerLevel);
+   43|      0|  FIRSetLoggerLevel(loggerLevel);
+   44|      0|}
+   45|       |
+   46|       |@end
+
+/Users/lenar/Desktop/LHypothesis/Example/Pods/FirebaseCore/FirebaseCore/Sources/FIRCoreDiagnosticsConnector.m:
+    1|       |/*
+    2|       | * Copyright 2019 Google
+    3|       | *
+    4|       | * Licensed under the Apache License, Version 2.0 (the "License");
+    5|       | * you may not use this file except in compliance with the License.
+    6|       | * You may obtain a copy of the License at
+    7|       | *
+    8|       | *      http://www.apache.org/licenses/LICENSE-2.0
+    9|       | *
+   10|       | * Unless required by applicable law or agreed to in writing, software
+   11|       | * distributed under the License is distributed on an "AS IS" BASIS,
+   12|       | * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   13|       | * See the License for the specific language governing permissions and
+   14|       | * limitations under the License.
+   15|       | */
+   16|       |
+   17|       |#import "FirebaseCore/Sources/Private/FIRCoreDiagnosticsConnector.h"
+   18|       |
+   19|       |#import "Interop/CoreDiagnostics/Public/FIRCoreDiagnosticsInterop.h"
+   20|       |
+   21|       |#import "FirebaseCore/Sources/Public/FirebaseCore/FIROptions.h"
+   22|       |
+   23|       |#import "FirebaseCore/Sources/FIRDiagnosticsData.h"
+   24|       |#import "FirebaseCore/Sources/Private/FIRAppInternal.h"
+   25|       |#import "FirebaseCore/Sources/Private/FIROptionsInternal.h"
+   26|       |
+   27|       |// Define the interop class symbol declared as an extern in FIRCoreDiagnosticsInterop.
+   28|       |Class<FIRCoreDiagnosticsInterop> FIRCoreDiagnosticsImplementation;
+   29|       |
+   30|       |@implementation FIRCoreDiagnosticsConnector
+   31|       |
+   32|      0|+ (void)initialize {
+   33|      0|  if (!FIRCoreDiagnosticsImplementation) {
+   34|      0|    FIRCoreDiagnosticsImplementation = NSClassFromString(@"FIRCoreDiagnostics");
+   35|      0|    if (FIRCoreDiagnosticsImplementation) {
+   36|      0|      NSAssert([FIRCoreDiagnosticsImplementation
+   37|      0|                   conformsToProtocol:@protocol(FIRCoreDiagnosticsInterop)],
+   38|      0|               @"If FIRCoreDiagnostics is implemented, it must conform to the interop protocol.");
+   39|      0|      NSAssert(
+   40|      0|          [FIRCoreDiagnosticsImplementation respondsToSelector:@selector(sendDiagnosticsData:)],
+   41|      0|          @"If FIRCoreDiagnostics is implemented, it must implement +sendDiagnosticsData.");
+   42|      0|    }
+   43|      0|  }
+   44|      0|}
+   45|       |
+   46|      0|+ (void)logCoreTelemetryWithOptions:(FIROptions *)options {
+   47|      0|  if (FIRCoreDiagnosticsImplementation) {
+   48|      0|    FIRDiagnosticsData *diagnosticsData = [[FIRDiagnosticsData alloc] init];
+   49|      0|    [diagnosticsData insertValue:@(YES) forKey:kFIRCDIsDataCollectionDefaultEnabledKey];
+   50|      0|    [diagnosticsData insertValue:[FIRApp firebaseUserAgent] forKey:kFIRCDFirebaseUserAgentKey];
+   51|      0|    [diagnosticsData insertValue:@(FIRConfigTypeCore) forKey:kFIRCDConfigurationTypeKey];
+   52|      0|    [diagnosticsData insertValue:options.googleAppID forKey:kFIRCDGoogleAppIDKey];
+   53|      0|    [diagnosticsData insertValue:options.bundleID forKey:kFIRCDBundleIDKey];
+   54|      0|    [diagnosticsData insertValue:@(options.usingOptionsFromDefaultPlist)
+   55|      0|                          forKey:kFIRCDUsingOptionsFromDefaultPlistKey];
+   56|      0|    [diagnosticsData insertValue:options.libraryVersionID forKey:kFIRCDLibraryVersionIDKey];
+   57|      0|    [FIRCoreDiagnosticsImplementation sendDiagnosticsData:diagnosticsData];
+   58|      0|  }
+   59|      0|}
+   60|       |
+   61|       |@end
+
+/Users/lenar/Desktop/LHypothesis/Example/Pods/FirebaseCore/FirebaseCore/Sources/FIRDependency.m:
+    1|       |/*
+    2|       | * Copyright 2018 Google
+    3|       | *
+    4|       | * Licensed under the Apache License, Version 2.0 (the "License");
+    5|       | * you may not use this file except in compliance with the License.
+    6|       | * You may obtain a copy of the License at
+    7|       | *
+    8|       | *      http://www.apache.org/licenses/LICENSE-2.0
+    9|       | *
+   10|       | * Unless required by applicable law or agreed to in writing, software
+   11|       | * distributed under the License is distributed on an "AS IS" BASIS,
+   12|       | * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   13|       | * See the License for the specific language governing permissions and
+   14|       | * limitations under the License.
+   15|       | */
+   16|       |
+   17|       |#import "FirebaseCore/Sources/Private/FIRDependency.h"
+   18|       |
+   19|       |@interface FIRDependency ()
+   20|       |
+   21|       |- (instancetype)initWithProtocol:(Protocol *)protocol isRequired:(BOOL)required;
+   22|       |
+   23|       |@end
+   24|       |
+   25|       |@implementation FIRDependency
+   26|       |
+   27|      0|+ (instancetype)dependencyWithProtocol:(Protocol *)protocol {
+   28|      0|  return [[self alloc] initWithProtocol:protocol isRequired:YES];
+   29|      0|}
+   30|       |
+   31|      0|+ (instancetype)dependencyWithProtocol:(Protocol *)protocol isRequired:(BOOL)required {
+   32|      0|  return [[self alloc] initWithProtocol:protocol isRequired:required];
+   33|      0|}
+   34|       |
+   35|      0|- (instancetype)initWithProtocol:(Protocol *)protocol isRequired:(BOOL)required {
+   36|      0|  self = [super init];
+   37|      0|  if (self) {
+   38|      0|    _protocol = protocol;
+   39|      0|    _isRequired = required;
+   40|      0|  }
+   41|      0|  return self;
+   42|      0|}
+   43|       |
+   44|       |@end
+
+/Users/lenar/Desktop/LHypothesis/Example/Pods/FirebaseCore/FirebaseCore/Sources/FIRDiagnosticsData.m:
+    1|       |/*
+    2|       | * Copyright 2019 Google
+    3|       | *
+    4|       | * Licensed under the Apache License, Version 2.0 (the "License");
+    5|       | * you may not use this file except in compliance with the License.
+    6|       | * You may obtain a copy of the License at
+    7|       | *
+    8|       | *      http://www.apache.org/licenses/LICENSE-2.0
+    9|       | *
+   10|       | * Unless required by applicable law or agreed to in writing, software
+   11|       | * distributed under the License is distributed on an "AS IS" BASIS,
+   12|       | * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   13|       | * See the License for the specific language governing permissions and
+   14|       | * limitations under the License.
+   15|       | */
+   16|       |
+   17|       |#import "FirebaseCore/Sources/FIRDiagnosticsData.h"
+   18|       |
+   19|       |#import "FirebaseCore/Sources/Public/FirebaseCore/FIRApp.h"
+   20|       |
+   21|       |#import "FirebaseCore/Sources/Private/FIRAppInternal.h"
+   22|       |#import "FirebaseCore/Sources/Private/FIROptionsInternal.h"
+   23|       |
+   24|       |@implementation FIRDiagnosticsData {
+   25|       |  /** Backing ivar for the diagnosticObjects property. */
+   26|       |  NSMutableDictionary<NSString *, id> *_diagnosticObjects;
+   27|       |}
+   28|       |
+   29|      0|- (instancetype)init {
+   30|      0|  self = [super init];
+   31|      0|  if (self) {
+   32|      0|    _diagnosticObjects = [[NSMutableDictionary alloc] init];
+   33|      0|  }
+   34|      0|  return self;
+   35|      0|}
+   36|       |
+   37|      0|- (void)insertValue:(nullable id)value forKey:(NSString *)key {
+   38|      0|  if (key) {
+   39|      0|    _diagnosticObjects[key] = value;
+   40|      0|  }
+   41|      0|}
+   42|       |
+   43|       |#pragma mark - FIRCoreDiagnosticsData
+   44|       |
+   45|      0|- (NSDictionary<NSString *, id> *)diagnosticObjects {
+   46|      0|  if (!_diagnosticObjects[kFIRCDllAppsCountKey]) {
+   47|      0|    _diagnosticObjects[kFIRCDllAppsCountKey] = @([FIRApp allApps].count);
+   48|      0|  }
+   49|      0|  if (!_diagnosticObjects[kFIRCDIsDataCollectionDefaultEnabledKey]) {
+   50|      0|    _diagnosticObjects[kFIRCDIsDataCollectionDefaultEnabledKey] =
+   51|      0|        @([[FIRApp defaultApp] isDataCollectionDefaultEnabled]);
+   52|      0|  }
+   53|      0|  if (!_diagnosticObjects[kFIRCDFirebaseUserAgentKey]) {
+   54|      0|    _diagnosticObjects[kFIRCDFirebaseUserAgentKey] = [FIRApp firebaseUserAgent];
+   55|      0|  }
+   56|      0|  return _diagnosticObjects;
+   57|      0|}
+   58|       |
+   59|       |#pragma clang diagnostic push
+   60|       |#pragma clang diagnostic ignored "-Wunused-parameter"
+   61|      0|- (void)setDiagnosticObjects:(NSDictionary<NSString *, id> *)diagnosticObjects {
+   62|      0|  NSAssert(NO, @"Please use -insertValue:forKey:");
+   63|      0|}
+   64|       |#pragma clang diagnostic pop
+   65|       |
+   66|       |@end
+
+/Users/lenar/Desktop/LHypothesis/Example/Pods/FirebaseCore/FirebaseCore/Sources/FIRFirebaseUserAgent.m:
+    1|       |/*
+    2|       | * Copyright 2020 Google LLC
+    3|       | *
+    4|       | * Licensed under the Apache License, Version 2.0 (the "License");
+    5|       | * you may not use this file except in compliance with the License.
+    6|       | * You may obtain a copy of the License at
+    7|       | *
+    8|       | *      http://www.apache.org/licenses/LICENSE-2.0
+    9|       | *
+   10|       | * Unless required by applicable law or agreed to in writing, software
+   11|       | * distributed under the License is distributed on an "AS IS" BASIS,
+   12|       | * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   13|       | * See the License for the specific language governing permissions and
+   14|       | * limitations under the License.
+   15|       | */
+   16|       |
+   17|       |#import "FirebaseCore/Sources/FIRFirebaseUserAgent.h"
+   18|       |
+   19|       |#import <GoogleUtilities/GULAppEnvironmentUtil.h>
+   20|       |
+   21|       |@interface FIRFirebaseUserAgent ()
+   22|       |
+   23|       |@property(nonatomic, readonly) NSMutableDictionary<NSString *, NSString *> *valuesByComponent;
+   24|       |@property(nonatomic, readonly) NSDictionary<NSString *, NSString *> *environmentComponents;
+   25|       |@property(nonatomic, readonly) NSString *firebaseUserAgent;
+   26|       |
+   27|       |@end
+   28|       |
+   29|       |@implementation FIRFirebaseUserAgent
+   30|       |
+   31|       |@synthesize firebaseUserAgent = _firebaseUserAgent;
+   32|       |@synthesize environmentComponents = _environmentComponents;
+   33|       |
+   34|      1|- (instancetype)init {
+   35|      1|  self = [super init];
+   36|      1|  if (self) {
+   37|      1|    _valuesByComponent = [[NSMutableDictionary alloc] init];
+   38|      1|  }
+   39|      1|  return self;
+   40|      1|}
+   41|       |
+   42|      0|- (NSString *)firebaseUserAgent {
+   43|      0|  @synchronized(self) {
+   44|      0|    if (_firebaseUserAgent == nil) {
+   45|      0|      NSMutableDictionary<NSString *, NSString *> *allComponents =
+   46|      0|          [self.valuesByComponent mutableCopy];
+   47|      0|      [allComponents setValuesForKeysWithDictionary:self.environmentComponents];
+   48|       |
+   49|      0|      __block NSMutableArray<NSString *> *components =
+   50|      0|          [[NSMutableArray<NSString *> alloc] initWithCapacity:self.valuesByComponent.count];
+   51|      0|      [allComponents enumerateKeysAndObjectsUsingBlock:^(
+   52|      0|                         NSString *_Nonnull name, NSString *_Nonnull value, BOOL *_Nonnull stop) {
+   53|      0|        [components addObject:[NSString stringWithFormat:@"%@/%@", name, value]];
+   54|      0|      }];
+   55|      0|      [components sortUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
+   56|      0|      _firebaseUserAgent = [components componentsJoinedByString:@" "];
+   57|      0|    }
+   58|      0|    return _firebaseUserAgent;
+   59|      0|  }
+   60|      0|}
+   61|       |
+   62|      3|- (void)setValue:(nullable NSString *)value forComponent:(NSString *)componentName {
+   63|      3|  @synchronized(self) {
+   64|      3|    self.valuesByComponent[componentName] = value;
+   65|       |    // Reset cached user agent string.
+   66|      3|    _firebaseUserAgent = nil;
+   67|      3|  }
+   68|      3|}
+   69|       |
+   70|      0|- (void)reset {
+   71|      0|  @synchronized(self) {
+   72|       |    // Reset components.
+   73|      0|    _valuesByComponent = [[[self class] environmentComponents] mutableCopy];
+   74|       |    // Reset cached user agent string.
+   75|      0|    _firebaseUserAgent = nil;
+   76|      0|  }
+   77|      0|}
+   78|       |
+   79|       |#pragma mark - Environment components
+   80|       |
+   81|      0|- (NSDictionary<NSString *, NSString *> *)environmentComponents {
+   82|      0|  if (_environmentComponents == nil) {
+   83|      0|    _environmentComponents = [[self class] environmentComponents];
+   84|      0|  }
+   85|      0|  return _environmentComponents;
+   86|      0|}
+   87|       |
+   88|      0|+ (NSDictionary<NSString *, NSString *> *)environmentComponents {
+   89|      0|  NSMutableDictionary<NSString *, NSString *> *components = [NSMutableDictionary dictionary];
+   90|       |
+   91|      0|  NSDictionary<NSString *, id> *info = [[NSBundle mainBundle] infoDictionary];
+   92|      0|  NSString *xcodeVersion = info[@"DTXcodeBuild"];
+   93|      0|  NSString *appleSdkVersion = info[@"DTSDKBuild"];
+   94|      0|  NSString *isFromAppstoreFlagValue = [GULAppEnvironmentUtil isFromAppStore] ? @"true" : @"false";
+   95|       |
+   96|      0|  components[@"apple-platform"] = [GULAppEnvironmentUtil applePlatform];
+   97|      0|  components[@"apple-sdk"] = appleSdkVersion;
+   98|      0|  components[@"appstore"] = isFromAppstoreFlagValue;
+   99|      0|  components[@"deploy"] = [GULAppEnvironmentUtil deploymentType];
+  100|      0|  components[@"device"] = [GULAppEnvironmentUtil deviceModel];
+  101|      0|  components[@"os-version"] = [GULAppEnvironmentUtil systemVersion];
+  102|      0|  components[@"xcode"] = xcodeVersion;
+  103|       |
+  104|      0|  return [components copy];
+  105|      0|}
+  106|       |
+  107|       |@end
+
+/Users/lenar/Desktop/LHypothesis/Example/Pods/FirebaseCore/FirebaseCore/Sources/FIRHeartbeatInfo.m:
+    1|       |// Copyright 2019 Google
+    2|       |//
+    3|       |// Licensed under the Apache License, Version 2.0 (the "License");
+    4|       |// you may not use this file except in compliance with the License.
+    5|       |// You may obtain a copy of the License at
+    6|       |//
+    7|       |//      http://www.apache.org/licenses/LICENSE-2.0
+    8|       |//
+    9|       |// Unless required by applicable law or agreed to in writing, software
+   10|       |// distributed under the License is distributed on an "AS IS" BASIS,
+   11|       |// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   12|       |// See the License for the specific language governing permissions and
+   13|       |// limitations under the License.
+   14|       |
+   15|       |#import "FirebaseCore/Sources/Private/FIRHeartbeatInfo.h"
+   16|       |#import <GoogleUtilities/GULHeartbeatDateStorable.h>
+   17|       |#import <GoogleUtilities/GULHeartbeatDateStorage.h>
+   18|       |#import <GoogleUtilities/GULHeartbeatDateStorageUserDefaults.h>
+   19|       |#import <GoogleUtilities/GULLogger.h>
+   20|       |#import "FirebaseCore/Sources/Private/FIRAppInternal.h"
+   21|       |
+   22|       |const static long secondsInDay = 86400;
+   23|       |@implementation FIRHeartbeatInfo : NSObject
+   24|       |
+   25|       |/** Updates the storage with the heartbeat information corresponding to this tag.
+   26|       | * @param heartbeatTag Tag which could either be sdk specific tag or the global tag.
+   27|       | * @return Boolean representing whether the heartbeat needs to be sent for this tag or not.
+   28|       | */
+   29|      0|+ (BOOL)updateIfNeededHeartbeatDateForTag:(NSString *)heartbeatTag {
+   30|      0|  @synchronized(self) {
+   31|      0|    NSString *const kHeartbeatStorageName = @"HEARTBEAT_INFO_STORAGE";
+   32|      0|    id<GULHeartbeatDateStorable> dataStorage;
+   33|       |#if TARGET_OS_TV
+   34|       |    NSUserDefaults *defaults =
+   35|       |        [[NSUserDefaults alloc] initWithSuiteName:kFirebaseCoreDefaultsSuiteName];
+   36|       |    dataStorage =
+   37|       |        [[GULHeartbeatDateStorageUserDefaults alloc] initWithDefaults:defaults
+   38|       |                                                                  key:kHeartbeatStorageName];
+   39|       |#else
+   40|      0|    dataStorage = [[GULHeartbeatDateStorage alloc] initWithFileName:kHeartbeatStorageName];
+   41|      0|#endif
+   42|      0|    NSDate *heartbeatTime = [dataStorage heartbeatDateForTag:heartbeatTag];
+   43|      0|    NSDate *currentDate = [NSDate date];
+   44|      0|    if (heartbeatTime != nil) {
+   45|      0|      NSTimeInterval secondsBetween = [currentDate timeIntervalSinceDate:heartbeatTime];
+   46|      0|      if (secondsBetween < secondsInDay) {
+   47|      0|        return false;
+   48|      0|      }
+   49|      0|    }
+   50|      0|    return [dataStorage setHearbeatDate:currentDate forTag:heartbeatTag];
+   51|      0|  }
+   52|      0|}
+   53|       |
+   54|      0|+ (FIRHeartbeatInfoCode)heartbeatCodeForTag:(NSString *)heartbeatTag {
+   55|      0|  NSString *globalTag = @"GLOBAL";
+   56|      0|  BOOL isSdkHeartbeatNeeded = [FIRHeartbeatInfo updateIfNeededHeartbeatDateForTag:heartbeatTag];
+   57|      0|  BOOL isGlobalHeartbeatNeeded = [FIRHeartbeatInfo updateIfNeededHeartbeatDateForTag:globalTag];
+   58|      0|  if (!isSdkHeartbeatNeeded && !isGlobalHeartbeatNeeded) {
+   59|       |    // Both sdk and global heartbeat not needed.
+   60|      0|    return FIRHeartbeatInfoCodeNone;
+   61|      0|  } else if (isSdkHeartbeatNeeded && !isGlobalHeartbeatNeeded) {
+   62|       |    // Only SDK heartbeat needed.
+   63|      0|    return FIRHeartbeatInfoCodeSDK;
+   64|      0|  } else if (!isSdkHeartbeatNeeded && isGlobalHeartbeatNeeded) {
+   65|       |    // Only global heartbeat needed.
+   66|      0|    return FIRHeartbeatInfoCodeGlobal;
+   67|      0|  } else {
+   68|       |    // Both sdk and global heartbeat are needed.
+   69|      0|    return FIRHeartbeatInfoCodeCombined;
+   70|      0|  }
+   71|      0|}
+   72|       |@end
+
+/Users/lenar/Desktop/LHypothesis/Example/Pods/FirebaseCore/FirebaseCore/Sources/FIRLogger.m:
+    1|       |// Copyright 2017 Google
+    2|       |//
+    3|       |// Licensed under the Apache License, Version 2.0 (the "License");
+    4|       |// you may not use this file except in compliance with the License.
+    5|       |// You may obtain a copy of the License at
+    6|       |//
+    7|       |//      http://www.apache.org/licenses/LICENSE-2.0
+    8|       |//
+    9|       |// Unless required by applicable law or agreed to in writing, software
+   10|       |// distributed under the License is distributed on an "AS IS" BASIS,
+   11|       |// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   12|       |// See the License for the specific language governing permissions and
+   13|       |// limitations under the License.
+   14|       |
+   15|       |#import "FirebaseCore/Sources/Private/FIRLogger.h"
+   16|       |
+   17|       |#import <GoogleUtilities/GULAppEnvironmentUtil.h>
+   18|       |#import <GoogleUtilities/GULLogger.h>
+   19|       |#import "FirebaseCore/Sources/Public/FirebaseCore/FIRLoggerLevel.h"
+   20|       |
+   21|       |#import "FirebaseCore/Sources/Public/FirebaseCore/FIRVersion.h"
+   22|       |
+   23|       |FIRLoggerService kFIRLoggerCore = @"[Firebase/Core]";
+   24|       |
+   25|       |// All the FIRLoggerService definitions should be migrated to clients. Do not add new ones!
+   26|       |FIRLoggerService kFIRLoggerAnalytics = @"[Firebase/Analytics]";
+   27|       |FIRLoggerService kFIRLoggerCrash = @"[Firebase/Crash]";
+   28|       |FIRLoggerService kFIRLoggerRemoteConfig = @"[Firebase/RemoteConfig]";
+   29|       |
+   30|       |/// Arguments passed on launch.
+   31|       |NSString *const kFIRDisableDebugModeApplicationArgument = @"-FIRDebugDisabled";
+   32|       |NSString *const kFIREnableDebugModeApplicationArgument = @"-FIRDebugEnabled";
+   33|       |NSString *const kFIRLoggerForceSDTERRApplicationArgument = @"-FIRLoggerForceSTDERR";
+   34|       |
+   35|       |/// Key for the debug mode bit in NSUserDefaults.
+   36|       |NSString *const kFIRPersistedDebugModeKey = @"/google/firebase/debug_mode";
+   37|       |
+   38|       |/// NSUserDefaults that should be used to store and read variables. If nil, `standardUserDefaults`
+   39|       |/// will be used.
+   40|       |static NSUserDefaults *sFIRLoggerUserDefaults;
+   41|       |
+   42|       |static dispatch_once_t sFIRLoggerOnceToken;
+   43|       |
+   44|       |// The sFIRAnalyticsDebugMode flag is here to support the -FIRDebugEnabled/-FIRDebugDisabled
+   45|       |// flags used by Analytics. Users who use those flags expect Analytics to log verbosely,
+   46|       |// while the rest of Firebase logs at the default level. This flag is introduced to support
+   47|       |// that behavior.
+   48|       |static BOOL sFIRAnalyticsDebugMode;
+   49|       |
+   50|       |#ifdef DEBUG
+   51|       |/// The regex pattern for the message code.
+   52|       |static NSString *const kMessageCodePattern = @"^I-[A-Z]{3}[0-9]{6}$";
+   53|       |static NSRegularExpression *sMessageCodeRegex;
+   54|       |#endif
+   55|       |
+   56|      0|void FIRLoggerInitializeASL(void) {
+   57|      0|  dispatch_once(&sFIRLoggerOnceToken, ^{
+   58|       |    // Register Firebase Version with GULLogger.
+   59|      0|    GULLoggerRegisterVersion(FIRFirebaseVersion());
+   60|       |
+   61|       |    // Override the aslOptions to ASL_OPT_STDERR if the override argument is passed in.
+   62|      0|    NSArray *arguments = [NSProcessInfo processInfo].arguments;
+   63|      0|    BOOL overrideSTDERR = [arguments containsObject:kFIRLoggerForceSDTERRApplicationArgument];
+   64|       |
+   65|       |    // Use the standard NSUserDefaults if it hasn't been explicitly set.
+   66|      0|    if (sFIRLoggerUserDefaults == nil) {
+   67|      0|      sFIRLoggerUserDefaults = [NSUserDefaults standardUserDefaults];
+   68|      0|    }
+   69|       |
+   70|      0|    BOOL forceDebugMode = NO;
+   71|      0|    BOOL debugMode = [sFIRLoggerUserDefaults boolForKey:kFIRPersistedDebugModeKey];
+   72|      0|    if ([arguments containsObject:kFIRDisableDebugModeApplicationArgument]) {  // Default mode
+   73|      0|      [sFIRLoggerUserDefaults removeObjectForKey:kFIRPersistedDebugModeKey];
+   74|      0|    } else if ([arguments containsObject:kFIREnableDebugModeApplicationArgument] ||
+   75|      0|               debugMode) {  // Debug mode
+   76|      0|      [sFIRLoggerUserDefaults setBool:YES forKey:kFIRPersistedDebugModeKey];
+   77|      0|      forceDebugMode = YES;
+   78|      0|    }
+   79|      0|    GULLoggerInitializeASL();
+   80|      0|    if (overrideSTDERR) {
+   81|      0|      GULLoggerEnableSTDERR();
+   82|      0|    }
+   83|      0|    if (forceDebugMode) {
+   84|      0|      GULLoggerForceDebug();
+   85|      0|    }
+   86|      0|  });
+   87|      0|}
+   88|       |
+   89|      0|__attribute__((no_sanitize("thread"))) void FIRSetAnalyticsDebugMode(BOOL analyticsDebugMode) {
+   90|      0|  sFIRAnalyticsDebugMode = analyticsDebugMode;
+   91|      0|}
+   92|       |
+   93|      0|void FIRSetLoggerLevel(FIRLoggerLevel loggerLevel) {
+   94|      0|  FIRLoggerInitializeASL();
+   95|      0|  GULSetLoggerLevel((GULLoggerLevel)loggerLevel);
+   96|      0|}
+   97|       |
+   98|       |#ifdef DEBUG
+   99|      0|void FIRResetLogger(void) {
+  100|      0|  extern void GULResetLogger(void);
+  101|      0|  sFIRLoggerOnceToken = 0;
+  102|      0|  [sFIRLoggerUserDefaults removeObjectForKey:kFIRPersistedDebugModeKey];
+  103|      0|  sFIRLoggerUserDefaults = nil;
+  104|      0|  GULResetLogger();
+  105|      0|}
+  106|       |
+  107|      0|void FIRSetLoggerUserDefaults(NSUserDefaults *defaults) {
+  108|      0|  sFIRLoggerUserDefaults = defaults;
+  109|      0|}
+  110|       |#endif
+  111|       |
+  112|       |/**
+  113|       | * Check if the level is high enough to be loggable.
+  114|       | *
+  115|       | * Analytics can override the log level with an intentional race condition.
+  116|       | * Add the attribute to get a clean thread sanitizer run.
+  117|       | */
+  118|       |__attribute__((no_sanitize("thread"))) BOOL FIRIsLoggableLevel(FIRLoggerLevel loggerLevel,
+  119|      0|                                                               BOOL analyticsComponent) {
+  120|      0|  FIRLoggerInitializeASL();
+  121|      0|  if (sFIRAnalyticsDebugMode && analyticsComponent) {
+  122|      0|    return YES;
+  123|      0|  }
+  124|      0|  return GULIsLoggableLevel((GULLoggerLevel)loggerLevel);
+  125|      0|}
+  126|       |
+  127|       |void FIRLogBasic(FIRLoggerLevel level,
+  128|       |                 FIRLoggerService service,
+  129|       |                 NSString *messageCode,
+  130|       |                 NSString *message,
+  131|      0|                 va_list args_ptr) {
+  132|      0|  FIRLoggerInitializeASL();
+  133|      0|  GULLogBasic((GULLoggerLevel)level, service,
+  134|      0|              sFIRAnalyticsDebugMode && [kFIRLoggerAnalytics isEqualToString:service], messageCode,
+  135|      0|              message, args_ptr);
+  136|      0|}
+  137|       |
+  138|       |/**
+  139|       | * Generates the logging functions using macros.
+  140|       | *
+  141|       | * Calling FIRLogError(kFIRLoggerCore, @"I-COR000001", @"Configure %@ failed.", @"blah") shows:
+  142|       | * yyyy-mm-dd hh:mm:ss.SSS sender[PID] <Error> [Firebase/Core][I-COR000001] Configure blah failed.
+  143|       | * Calling FIRLogDebug(kFIRLoggerCore, @"I-COR000001", @"Configure succeed.") shows:
+  144|       | * yyyy-mm-dd hh:mm:ss.SSS sender[PID] <Debug> [Firebase/Core][I-COR000001] Configure succeed.
+  145|       | */
+  146|       |#define FIR_LOGGING_FUNCTION(level)                                                             \
+  147|      0|  void FIRLog##level(FIRLoggerService service, NSString *messageCode, NSString *message, ...) { \
+  148|      0|    va_list args_ptr;                                                                           \
+  149|      0|    va_start(args_ptr, message);                                                                \
+  150|      0|    FIRLogBasic(FIRLoggerLevel##level, service, messageCode, message, args_ptr);                \
+  151|      0|    va_end(args_ptr);                                                                           \
+  152|      0|  }
+  ------------------
+  | Unexecuted instantiation: FIRLogError
+  ------------------
+  | Unexecuted instantiation: FIRLogWarning
+  ------------------
+  | Unexecuted instantiation: FIRLogNotice
+  ------------------
+  | Unexecuted instantiation: FIRLogInfo
+  ------------------
+  | Unexecuted instantiation: FIRLogDebug
+  ------------------
+  153|       |
+  154|       |FIR_LOGGING_FUNCTION(Error)
+  155|       |FIR_LOGGING_FUNCTION(Warning)
+  156|       |FIR_LOGGING_FUNCTION(Notice)
+  157|       |FIR_LOGGING_FUNCTION(Info)
+  158|       |FIR_LOGGING_FUNCTION(Debug)
+  159|       |
+  160|       |#undef FIR_MAKE_LOGGER
+  161|       |
+  162|       |#pragma mark - FIRLoggerWrapper
+  163|       |
+  164|       |@implementation FIRLoggerWrapper
+  165|       |
+  166|       |+ (void)logWithLevel:(FIRLoggerLevel)level
+  167|       |         withService:(FIRLoggerService)service
+  168|       |            withCode:(NSString *)messageCode
+  169|       |         withMessage:(NSString *)message
+  170|      0|            withArgs:(va_list)args {
+  171|      0|  FIRLogBasic(level, service, messageCode, message, args);
+  172|      0|}
+  173|       |
+  174|       |@end
+
+/Users/lenar/Desktop/LHypothesis/Example/Pods/FirebaseCore/FirebaseCore/Sources/FIROptions.m:
+    1|       |// Copyright 2017 Google
+    2|       |//
+    3|       |// Licensed under the Apache License, Version 2.0 (the "License");
+    4|       |// you may not use this file except in compliance with the License.
+    5|       |// You may obtain a copy of the License at
+    6|       |//
+    7|       |//      http://www.apache.org/licenses/LICENSE-2.0
+    8|       |//
+    9|       |// Unless required by applicable law or agreed to in writing, software
+   10|       |// distributed under the License is distributed on an "AS IS" BASIS,
+   11|       |// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   12|       |// See the License for the specific language governing permissions and
+   13|       |// limitations under the License.
+   14|       |
+   15|       |#import "FirebaseCore/Sources/FIRBundleUtil.h"
+   16|       |#import "FirebaseCore/Sources/Private/FIRAppInternal.h"
+   17|       |#import "FirebaseCore/Sources/Private/FIRLogger.h"
+   18|       |#import "FirebaseCore/Sources/Private/FIROptionsInternal.h"
+   19|       |#import "FirebaseCore/Sources/Public/FirebaseCore/FIRVersion.h"
+   20|       |
+   21|       |// Keys for the strings in the plist file.
+   22|       |NSString *const kFIRAPIKey = @"API_KEY";
+   23|       |NSString *const kFIRTrackingID = @"TRACKING_ID";
+   24|       |NSString *const kFIRGoogleAppID = @"GOOGLE_APP_ID";
+   25|       |NSString *const kFIRClientID = @"CLIENT_ID";
+   26|       |NSString *const kFIRGCMSenderID = @"GCM_SENDER_ID";
+   27|       |NSString *const kFIRAndroidClientID = @"ANDROID_CLIENT_ID";
+   28|       |NSString *const kFIRDatabaseURL = @"DATABASE_URL";
+   29|       |NSString *const kFIRStorageBucket = @"STORAGE_BUCKET";
+   30|       |// The key to locate the expected bundle identifier in the plist file.
+   31|       |NSString *const kFIRBundleID = @"BUNDLE_ID";
+   32|       |// The key to locate the project identifier in the plist file.
+   33|       |NSString *const kFIRProjectID = @"PROJECT_ID";
+   34|       |
+   35|       |NSString *const kFIRIsMeasurementEnabled = @"IS_MEASUREMENT_ENABLED";
+   36|       |NSString *const kFIRIsAnalyticsCollectionEnabled = @"FIREBASE_ANALYTICS_COLLECTION_ENABLED";
+   37|       |NSString *const kFIRIsAnalyticsCollectionDeactivated = @"FIREBASE_ANALYTICS_COLLECTION_DEACTIVATED";
+   38|       |
+   39|       |NSString *const kFIRIsAnalyticsEnabled = @"IS_ANALYTICS_ENABLED";
+   40|       |NSString *const kFIRIsSignInEnabled = @"IS_SIGNIN_ENABLED";
+   41|       |
+   42|       |// Library version ID formatted like:
+   43|       |// @"5"     // Major version (one or more digits)
+   44|       |// @"04"    // Minor version (exactly 2 digits)
+   45|       |// @"01"    // Build number (exactly 2 digits)
+   46|       |// @"000";  // Fixed "000"
+   47|       |NSString *kFIRLibraryVersionID;
+   48|       |
+   49|       |// Plist file name.
+   50|       |NSString *const kServiceInfoFileName = @"GoogleService-Info";
+   51|       |// Plist file type.
+   52|       |NSString *const kServiceInfoFileType = @"plist";
+   53|       |
+   54|       |// Exception raised from attempting to modify a FIROptions after it's been copied to a FIRApp.
+   55|       |NSString *const kFIRExceptionBadModification =
+   56|       |    @"Attempted to modify options after it's set on FIRApp. Please modify all properties before "
+   57|       |    @"initializing FIRApp.";
+   58|       |
+   59|       |@interface FIROptions ()
+   60|       |
+   61|       |/**
+   62|       | * This property maintains the actual configuration key-value pairs.
+   63|       | */
+   64|       |@property(nonatomic, readwrite) NSMutableDictionary *optionsDictionary;
+   65|       |
+   66|       |/**
+   67|       | * Calls `analyticsOptionsDictionaryWithInfoDictionary:` using [NSBundle mainBundle].infoDictionary.
+   68|       | * It combines analytics options from both the infoDictionary and the GoogleService-Info.plist.
+   69|       | * Values which are present in the main plist override values from the GoogleService-Info.plist.
+   70|       | */
+   71|       |@property(nonatomic, readonly) NSDictionary *analyticsOptionsDictionary;
+   72|       |
+   73|       |/**
+   74|       | * Combination of analytics options from both the infoDictionary and the GoogleService-Info.plist.
+   75|       | * Values which are present in the infoDictionary override values from the GoogleService-Info.plist.
+   76|       | */
+   77|       |- (NSDictionary *)analyticsOptionsDictionaryWithInfoDictionary:(NSDictionary *)infoDictionary;
+   78|       |
+   79|       |/**
+   80|       | * Throw exception if editing is locked when attempting to modify an option.
+   81|       | */
+   82|       |- (void)checkEditingLocked;
+   83|       |
+   84|       |@end
+   85|       |
+   86|       |@implementation FIROptions {
+   87|       |  /// Backing variable for self.analyticsOptionsDictionary.
+   88|       |  NSDictionary *_analyticsOptionsDictionary;
+   89|       |}
+   90|       |
+   91|       |static FIROptions *sDefaultOptions = nil;
+   92|       |static NSDictionary *sDefaultOptionsDictionary = nil;
+   93|       |static dispatch_once_t sDefaultOptionsOnceToken;
+   94|       |static dispatch_once_t sDefaultOptionsDictionaryOnceToken;
+   95|       |
+   96|       |#pragma mark - Public only for internal class methods
+   97|       |
+   98|      0|+ (FIROptions *)defaultOptions {
+   99|      0|  dispatch_once(&sDefaultOptionsOnceToken, ^{
+  100|      0|    NSDictionary *defaultOptionsDictionary = [self defaultOptionsDictionary];
+  101|      0|    if (defaultOptionsDictionary != nil) {
+  102|      0|      sDefaultOptions =
+  103|      0|          [[FIROptions alloc] initInternalWithOptionsDictionary:defaultOptionsDictionary];
+  104|      0|    }
+  105|      0|  });
+  106|       |
+  107|      0|  return sDefaultOptions;
+  108|      0|}
+  109|       |
+  110|       |#pragma mark - Private class methods
+  111|       |
+  112|      0|+ (NSDictionary *)defaultOptionsDictionary {
+  113|      0|  dispatch_once(&sDefaultOptionsDictionaryOnceToken, ^{
+  114|      0|    NSString *plistFilePath = [FIROptions plistFilePathWithName:kServiceInfoFileName];
+  115|      0|    if (plistFilePath == nil) {
+  116|      0|      return;
+  117|      0|    }
+  118|      0|    sDefaultOptionsDictionary = [NSDictionary dictionaryWithContentsOfFile:plistFilePath];
+  119|      0|    if (sDefaultOptionsDictionary == nil) {
+  120|      0|      FIRLogError(kFIRLoggerCore, @"I-COR000011",
+  121|      0|                  @"The configuration file is not a dictionary: "
+  122|      0|                  @"'%@.%@'.",
+  123|      0|                  kServiceInfoFileName, kServiceInfoFileType);
+  124|      0|    }
+  125|      0|  });
+  126|       |
+  127|      0|  return sDefaultOptionsDictionary;
+  128|      0|}
+  129|       |
+  130|       |// Returns the path of the plist file with a given file name.
+  131|      0|+ (NSString *)plistFilePathWithName:(NSString *)fileName {
+  132|      0|  NSArray *bundles = [FIRBundleUtil relevantBundles];
+  133|      0|  NSString *plistFilePath =
+  134|      0|      [FIRBundleUtil optionsDictionaryPathWithResourceName:fileName
+  135|      0|                                               andFileType:kServiceInfoFileType
+  136|      0|                                                 inBundles:bundles];
+  137|      0|  if (plistFilePath == nil) {
+  138|      0|    FIRLogError(kFIRLoggerCore, @"I-COR000012", @"Could not locate configuration file: '%@.%@'.",
+  139|      0|                fileName, kServiceInfoFileType);
+  140|      0|  }
+  141|      0|  return plistFilePath;
+  142|      0|}
+  143|       |
+  144|      0|+ (void)resetDefaultOptions {
+  145|      0|  sDefaultOptions = nil;
+  146|      0|  sDefaultOptionsDictionary = nil;
+  147|      0|  sDefaultOptionsOnceToken = 0;
+  148|      0|  sDefaultOptionsDictionaryOnceToken = 0;
+  149|      0|}
+  150|       |
+  151|       |#pragma mark - Private instance methods
+  152|       |
+  153|      0|- (instancetype)initInternalWithOptionsDictionary:(NSDictionary *)optionsDictionary {
+  154|      0|  self = [super init];
+  155|      0|  if (self) {
+  156|      0|    _optionsDictionary = [optionsDictionary mutableCopy];
+  157|      0|    _usingOptionsFromDefaultPlist = YES;
+  158|      0|  }
+  159|      0|  return self;
+  160|      0|}
+  161|       |
+  162|      0|- (id)copyWithZone:(NSZone *)zone {
+  163|      0|  FIROptions *newOptions = [(FIROptions *)[[self class] allocWithZone:zone]
+  164|      0|      initInternalWithOptionsDictionary:self.optionsDictionary];
+  165|      0|  if (newOptions) {
+  166|      0|    newOptions.deepLinkURLScheme = self.deepLinkURLScheme;
+  167|      0|    newOptions.appGroupID = self.appGroupID;
+  168|      0|    newOptions.editingLocked = self.isEditingLocked;
+  169|      0|    newOptions.usingOptionsFromDefaultPlist = self.usingOptionsFromDefaultPlist;
+  170|      0|  }
+  171|      0|  return newOptions;
+  172|      0|}
+  173|       |
+  174|       |#pragma mark - Public instance methods
+  175|       |
+  176|      0|- (instancetype)init {
+  177|       |  // Unavailable.
+  178|      0|  [self doesNotRecognizeSelector:_cmd];
+  179|      0|  return nil;
+  180|      0|}
+  181|       |
+  182|      0|- (instancetype)initWithContentsOfFile:(NSString *)plistPath {
+  183|      0|  self = [super init];
+  184|      0|  if (self) {
+  185|      0|    if (plistPath == nil) {
+  186|      0|      FIRLogError(kFIRLoggerCore, @"I-COR000013", @"The plist file path is nil.");
+  187|      0|      return nil;
+  188|      0|    }
+  189|      0|    _optionsDictionary = [[NSDictionary dictionaryWithContentsOfFile:plistPath] mutableCopy];
+  190|      0|    if (_optionsDictionary == nil) {
+  191|      0|      FIRLogError(kFIRLoggerCore, @"I-COR000014",
+  192|      0|                  @"The configuration file at %@ does not exist or "
+  193|      0|                  @"is not a well-formed plist file.",
+  194|      0|                  plistPath);
+  195|      0|      return nil;
+  196|      0|    }
+  197|       |    // TODO: Do we want to validate the dictionary here? It says we do that already in
+  198|       |    // the public header.
+  199|      0|  }
+  200|      0|  return self;
+  201|      0|}
+  202|       |
+  203|      0|- (instancetype)initWithGoogleAppID:(NSString *)googleAppID GCMSenderID:(NSString *)GCMSenderID {
+  204|      0|  self = [super init];
+  205|      0|  if (self) {
+  206|      0|    NSMutableDictionary *mutableOptionsDict = [NSMutableDictionary dictionary];
+  207|      0|    [mutableOptionsDict setValue:googleAppID forKey:kFIRGoogleAppID];
+  208|      0|    [mutableOptionsDict setValue:GCMSenderID forKey:kFIRGCMSenderID];
+  209|      0|    [mutableOptionsDict setValue:[[NSBundle mainBundle] bundleIdentifier] forKey:kFIRBundleID];
+  210|      0|    self.optionsDictionary = mutableOptionsDict;
+  211|      0|  }
+  212|      0|  return self;
+  213|      0|}
+  214|       |
+  215|      0|- (NSString *)APIKey {
+  216|      0|  return self.optionsDictionary[kFIRAPIKey];
+  217|      0|}
+  218|       |
+  219|      0|- (void)checkEditingLocked {
+  220|      0|  if (self.isEditingLocked) {
+  221|      0|    [NSException raise:kFirebaseCoreErrorDomain format:kFIRExceptionBadModification];
+  222|      0|  }
+  223|      0|}
+  224|       |
+  225|      0|- (void)setAPIKey:(NSString *)APIKey {
+  226|      0|  [self checkEditingLocked];
+  227|      0|  _optionsDictionary[kFIRAPIKey] = [APIKey copy];
+  228|      0|}
+  229|       |
+  230|      0|- (NSString *)clientID {
+  231|      0|  return self.optionsDictionary[kFIRClientID];
+  232|      0|}
+  233|       |
+  234|      0|- (void)setClientID:(NSString *)clientID {
+  235|      0|  [self checkEditingLocked];
+  236|      0|  _optionsDictionary[kFIRClientID] = [clientID copy];
+  237|      0|}
+  238|       |
+  239|      0|- (NSString *)trackingID {
+  240|      0|  return self.optionsDictionary[kFIRTrackingID];
+  241|      0|}
+  242|       |
+  243|      0|- (void)setTrackingID:(NSString *)trackingID {
+  244|      0|  [self checkEditingLocked];
+  245|      0|  _optionsDictionary[kFIRTrackingID] = [trackingID copy];
+  246|      0|}
+  247|       |
+  248|      0|- (NSString *)GCMSenderID {
+  249|      0|  return self.optionsDictionary[kFIRGCMSenderID];
+  250|      0|}
+  251|       |
+  252|      0|- (void)setGCMSenderID:(NSString *)GCMSenderID {
+  253|      0|  [self checkEditingLocked];
+  254|      0|  _optionsDictionary[kFIRGCMSenderID] = [GCMSenderID copy];
+  255|      0|}
+  256|       |
+  257|      0|- (NSString *)projectID {
+  258|      0|  return self.optionsDictionary[kFIRProjectID];
+  259|      0|}
+  260|       |
+  261|      0|- (void)setProjectID:(NSString *)projectID {
+  262|      0|  [self checkEditingLocked];
+  263|      0|  _optionsDictionary[kFIRProjectID] = [projectID copy];
+  264|      0|}
+  265|       |
+  266|      0|- (NSString *)androidClientID {
+  267|      0|  return self.optionsDictionary[kFIRAndroidClientID];
+  268|      0|}
+  269|       |
+  270|      0|- (void)setAndroidClientID:(NSString *)androidClientID {
+  271|      0|  [self checkEditingLocked];
+  272|      0|  _optionsDictionary[kFIRAndroidClientID] = [androidClientID copy];
+  273|      0|}
+  274|       |
+  275|      0|- (NSString *)googleAppID {
+  276|      0|  return self.optionsDictionary[kFIRGoogleAppID];
+  277|      0|}
+  278|       |
+  279|      0|- (void)setGoogleAppID:(NSString *)googleAppID {
+  280|      0|  [self checkEditingLocked];
+  281|      0|  _optionsDictionary[kFIRGoogleAppID] = [googleAppID copy];
+  282|      0|}
+  283|       |
+  284|      0|- (NSString *)libraryVersionID {
+  285|      0|  static dispatch_once_t onceToken;
+  286|      0|  dispatch_once(&onceToken, ^{
+  287|       |    // The unit tests are set up to catch anything that does not properly convert.
+  288|      0|    NSString *version = FIRFirebaseVersion();
+  289|      0|    NSArray *components = [version componentsSeparatedByString:@"."];
+  290|      0|    NSString *major = [components objectAtIndex:0];
+  291|      0|    NSString *minor = [NSString stringWithFormat:@"%02d", [[components objectAtIndex:1] intValue]];
+  292|      0|    NSString *patch = [NSString stringWithFormat:@"%02d", [[components objectAtIndex:2] intValue]];
+  293|      0|    kFIRLibraryVersionID = [NSString stringWithFormat:@"%@%@%@000", major, minor, patch];
+  294|      0|  });
+  295|      0|  return kFIRLibraryVersionID;
+  296|      0|}
+  297|       |
+  298|      0|- (void)setLibraryVersionID:(NSString *)libraryVersionID {
+  299|      0|  _optionsDictionary[kFIRLibraryVersionID] = [libraryVersionID copy];
+  300|      0|}
+  301|       |
+  302|      0|- (NSString *)databaseURL {
+  303|      0|  return self.optionsDictionary[kFIRDatabaseURL];
+  304|      0|}
+  305|       |
+  306|      0|- (void)setDatabaseURL:(NSString *)databaseURL {
+  307|      0|  [self checkEditingLocked];
+  308|       |
+  309|      0|  _optionsDictionary[kFIRDatabaseURL] = [databaseURL copy];
+  310|      0|}
+  311|       |
+  312|      0|- (NSString *)storageBucket {
+  313|      0|  return self.optionsDictionary[kFIRStorageBucket];
+  314|      0|}
+  315|       |
+  316|      0|- (void)setStorageBucket:(NSString *)storageBucket {
+  317|      0|  [self checkEditingLocked];
+  318|      0|  _optionsDictionary[kFIRStorageBucket] = [storageBucket copy];
+  319|      0|}
+  320|       |
+  321|      0|- (void)setDeepLinkURLScheme:(NSString *)deepLinkURLScheme {
+  322|      0|  [self checkEditingLocked];
+  323|      0|  _deepLinkURLScheme = [deepLinkURLScheme copy];
+  324|      0|}
+  325|       |
+  326|      0|- (NSString *)bundleID {
+  327|      0|  return self.optionsDictionary[kFIRBundleID];
+  328|      0|}
+  329|       |
+  330|      0|- (void)setBundleID:(NSString *)bundleID {
+  331|      0|  [self checkEditingLocked];
+  332|      0|  _optionsDictionary[kFIRBundleID] = [bundleID copy];
+  333|      0|}
+  334|       |
+  335|      0|- (void)setAppGroupID:(NSString *)appGroupID {
+  336|      0|  [self checkEditingLocked];
+  337|      0|  _appGroupID = [appGroupID copy];
+  338|      0|}
+  339|       |
+  340|       |#pragma mark - Equality
+  341|       |
+  342|      0|- (BOOL)isEqual:(id)object {
+  343|      0|  if (!object || ![object isKindOfClass:[FIROptions class]]) {
+  344|      0|    return NO;
+  345|      0|  }
+  346|       |
+  347|      0|  return [self isEqualToOptions:(FIROptions *)object];
+  348|      0|}
+  349|       |
+  350|      0|- (BOOL)isEqualToOptions:(FIROptions *)options {
+  351|       |  // Skip any non-FIROptions classes.
+  352|      0|  if (![options isKindOfClass:[FIROptions class]]) {
+  353|      0|    return NO;
+  354|      0|  }
+  355|       |
+  356|       |  // Check the internal dictionary and custom properties for differences.
+  357|      0|  if (![options.optionsDictionary isEqualToDictionary:self.optionsDictionary]) {
+  358|      0|    return NO;
+  359|      0|  }
+  360|       |
+  361|       |  // Validate extra properties not contained in the dictionary. Only validate it if one of the
+  362|       |  // objects has the property set.
+  363|      0|  if ((options.deepLinkURLScheme != nil || self.deepLinkURLScheme != nil) &&
+  364|      0|      ![options.deepLinkURLScheme isEqualToString:self.deepLinkURLScheme]) {
+  365|      0|    return NO;
+  366|      0|  }
+  367|       |
+  368|      0|  if ((options.appGroupID != nil || self.appGroupID != nil) &&
+  369|      0|      ![options.appGroupID isEqualToString:self.appGroupID]) {
+  370|      0|    return NO;
+  371|      0|  }
+  372|       |
+  373|       |  // Validate the Analytics options haven't changed with the Info.plist.
+  374|      0|  if (![options.analyticsOptionsDictionary isEqualToDictionary:self.analyticsOptionsDictionary]) {
+  375|      0|    return NO;
+  376|      0|  }
+  377|       |
+  378|       |  // We don't care about the `editingLocked` or `usingOptionsFromDefaultPlist` properties since
+  379|       |  // those relate to lifecycle and construction, we only care if the contents of the options
+  380|       |  // themselves are equal.
+  381|      0|  return YES;
+  382|      0|}
+  383|       |
+  384|      0|- (NSUInteger)hash {
+  385|       |  // This is strongly recommended for any object that implements a custom `isEqual:` method to
+  386|       |  // ensure that dictionary and set behavior matches other `isEqual:` checks.
+  387|       |  // Note: `self.analyticsOptionsDictionary` was left out here since it solely relies on the
+  388|       |  // contents of the main bundle's `Info.plist`. We should avoid reading that file and the contents
+  389|       |  // should be identical.
+  390|      0|  return self.optionsDictionary.hash ^ self.deepLinkURLScheme.hash ^ self.appGroupID.hash;
+  391|      0|}
+  392|       |
+  393|       |#pragma mark - Internal instance methods
+  394|       |
+  395|      0|- (NSDictionary *)analyticsOptionsDictionaryWithInfoDictionary:(NSDictionary *)infoDictionary {
+  396|      0|  if (_analyticsOptionsDictionary == nil) {
+  397|      0|    NSMutableDictionary *tempAnalyticsOptions = [[NSMutableDictionary alloc] init];
+  398|      0|    NSArray *measurementKeys = @[
+  399|      0|      kFIRIsMeasurementEnabled, kFIRIsAnalyticsCollectionEnabled,
+  400|      0|      kFIRIsAnalyticsCollectionDeactivated
+  401|      0|    ];
+  402|      0|    for (NSString *key in measurementKeys) {
+  403|      0|      id value = infoDictionary[key] ?: self.optionsDictionary[key] ?: nil;
+  404|      0|      if (!value) {
+  405|      0|        continue;
+  406|      0|      }
+  407|      0|      tempAnalyticsOptions[key] = value;
+  408|      0|    }
+  409|      0|    _analyticsOptionsDictionary = tempAnalyticsOptions;
+  410|      0|  }
+  411|      0|  return _analyticsOptionsDictionary;
+  412|      0|}
+  413|       |
+  414|      0|- (NSDictionary *)analyticsOptionsDictionary {
+  415|      0|  return [self analyticsOptionsDictionaryWithInfoDictionary:[NSBundle mainBundle].infoDictionary];
+  416|      0|}
+  417|       |
+  418|       |/**
+  419|       | * Whether or not Measurement was enabled. Measurement is enabled unless explicitly disabled in
+  420|       | * GoogleService-Info.plist. This uses the old plist flag IS_MEASUREMENT_ENABLED, which should still
+  421|       | * be supported.
+  422|       | */
+  423|      0|- (BOOL)isMeasurementEnabled {
+  424|      0|  if (self.isAnalyticsCollectionDeactivated) {
+  425|      0|    return NO;
+  426|      0|  }
+  427|      0|  NSNumber *value = self.analyticsOptionsDictionary[kFIRIsMeasurementEnabled];
+  428|      0|  if (value == nil) {
+  429|       |    // TODO: This could probably be cleaned up since FIROptions shouldn't know about FIRApp or have
+  430|       |    //       to check if it's the default app. The FIROptions instance can't be modified after
+  431|       |    //       `+configure` is called, so it's not a good place to copy it either in case the flag is
+  432|       |    //       changed at runtime.
+  433|       |
+  434|       |    // If no values are set for Analytics, fall back to the global collection switch in FIRApp.
+  435|       |    // Analytics only supports the default FIRApp, so check that first.
+  436|      0|    if (![FIRApp isDefaultAppConfigured]) {
+  437|      0|      return NO;
+  438|      0|    }
+  439|       |
+  440|       |    // Fall back to the default app's collection switch when the key is not in the dictionary.
+  441|      0|    return [FIRApp defaultApp].isDataCollectionDefaultEnabled;
+  442|      0|  }
+  443|      0|  return [value boolValue];
+  444|      0|}
+  445|       |
+  446|      0|- (BOOL)isAnalyticsCollectionExplicitlySet {
+  447|       |  // If it's de-activated, it classifies as explicity set. If not, it's not a good enough indication
+  448|       |  // that the developer wants FirebaseAnalytics enabled so continue checking.
+  449|      0|  if (self.isAnalyticsCollectionDeactivated) {
+  450|      0|    return YES;
+  451|      0|  }
+  452|       |
+  453|       |  // Check if the current Analytics flag is set.
+  454|      0|  id collectionEnabledObject = self.analyticsOptionsDictionary[kFIRIsAnalyticsCollectionEnabled];
+  455|      0|  if (collectionEnabledObject && [collectionEnabledObject isKindOfClass:[NSNumber class]]) {
+  456|       |    // It doesn't matter what the value is, it's explicitly set.
+  457|      0|    return YES;
+  458|      0|  }
+  459|       |
+  460|       |  // Check if the old measurement flag is set.
+  461|      0|  id measurementEnabledObject = self.analyticsOptionsDictionary[kFIRIsMeasurementEnabled];
+  462|      0|  if (measurementEnabledObject && [measurementEnabledObject isKindOfClass:[NSNumber class]]) {
+  463|       |    // It doesn't matter what the value is, it's explicitly set.
+  464|      0|    return YES;
+  465|      0|  }
+  466|       |
+  467|       |  // No flags are set to explicitly enable or disable FirebaseAnalytics.
+  468|      0|  return NO;
+  469|      0|}
+  470|       |
+  471|      0|- (BOOL)isAnalyticsCollectionEnabled {
+  472|      0|  if (self.isAnalyticsCollectionDeactivated) {
+  473|      0|    return NO;
+  474|      0|  }
+  475|      0|  NSNumber *value = self.analyticsOptionsDictionary[kFIRIsAnalyticsCollectionEnabled];
+  476|      0|  if (value == nil) {
+  477|      0|    return self.isMeasurementEnabled;  // Fall back to older plist flag.
+  478|      0|  }
+  479|      0|  return [value boolValue];
+  480|      0|}
+  481|       |
+  482|      0|- (BOOL)isAnalyticsCollectionDeactivated {
+  483|      0|  NSNumber *value = self.analyticsOptionsDictionary[kFIRIsAnalyticsCollectionDeactivated];
+  484|      0|  if (value == nil) {
+  485|      0|    return NO;  // Analytics Collection is not deactivated when the key is not in the dictionary.
+  486|      0|  }
+  487|      0|  return [value boolValue];
+  488|      0|}
+  489|       |
+  490|      0|- (BOOL)isAnalyticsEnabled {
+  491|      0|  return [self.optionsDictionary[kFIRIsAnalyticsEnabled] boolValue];
+  492|      0|}
+  493|       |
+  494|      0|- (BOOL)isSignInEnabled {
+  495|      0|  return [self.optionsDictionary[kFIRIsSignInEnabled] boolValue];
+  496|      0|}
+  497|       |
+  498|       |@end
+
+/Users/lenar/Desktop/LHypothesis/Example/Pods/FirebaseCore/FirebaseCore/Sources/FIRVersion.m:
+    1|       |/*
+    2|       | * Copyright 2017 Google
+    3|       | *
+    4|       | * Licensed under the Apache License, Version 2.0 (the "License");
+    5|       | * you may not use this file except in compliance with the License.
+    6|       | * You may obtain a copy of the License at
+    7|       | *
+    8|       | *      http://www.apache.org/licenses/LICENSE-2.0
+    9|       | *
+   10|       | * Unless required by applicable law or agreed to in writing, software
+   11|       | * distributed under the License is distributed on an "AS IS" BASIS,
+   12|       | * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   13|       | * See the License for the specific language governing permissions and
+   14|       | * limitations under the License.
+   15|       | */
+   16|       |
+   17|       |#import "FirebaseCore/Sources/Public/FirebaseCore/FIRVersion.h"
+   18|       |
+   19|       |#ifndef Firebase_VERSION
+   20|       |#error "Firebase_VERSION is not defined: add -DFirebase_VERSION=... to the build invocation"
+   21|       |#endif
+   22|       |
+   23|       |// The following two macros supply the incantation so that the C
+   24|       |// preprocessor does not try to parse the version as a floating
+   25|       |// point number. See
+   26|       |// https://www.guyrutenberg.com/2008/12/20/expanding-macros-into-string-constants-in-c/
+   27|      2|#define STR(x) STR_EXPAND(x)
+   28|      2|#define STR_EXPAND(x) #x
+   29|       |
+   30|      2|NSString* FIRFirebaseVersion(void) {
+   31|      2|  return @STR(Firebase_VERSION);
+   32|      2|}
+
+/Users/lenar/Desktop/LHypothesis/Example/Pods/FirebaseCore/Interop/CoreDiagnostics/Public/FIRCoreDiagnosticsData.h:
+    1|       |/*
+    2|       | * Copyright 2019 Google
+    3|       | *
+    4|       | * Licensed under the Apache License, Version 2.0 (the "License");
+    5|       | * you may not use this file except in compliance with the License.
+    6|       | * You may obtain a copy of the License at
+    7|       | *
+    8|       | *      http://www.apache.org/licenses/LICENSE-2.0
+    9|       | *
+   10|       | * Unless required by applicable law or agreed to in writing, software
+   11|       | * distributed under the License is distributed on an "AS IS" BASIS,
+   12|       | * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   13|       | * See the License for the specific language governing permissions and
+   14|       | * limitations under the License.
+   15|       | */
+   16|       |
+   17|       |#import <Foundation/Foundation.h>
+   18|       |
+   19|       |NS_ASSUME_NONNULL_BEGIN
+   20|       |
+   21|       |/** If present, is a BOOL wrapped in an NSNumber. */
+   22|      0|#define kFIRCDIsDataCollectionDefaultEnabledKey @"FIRCDIsDataCollectionDefaultEnabledKey"
+   23|       |
+   24|       |/** If present, is an int32_t wrapped in an NSNumber. */
+   25|      0|#define kFIRCDConfigurationTypeKey @"FIRCDConfigurationTypeKey"
+   26|       |
+   27|       |/** If present, is an NSString. */
+   28|       |#define kFIRCDSdkNameKey @"FIRCDSdkNameKey"
+   29|       |
+   30|       |/** If present, is an NSString. */
+   31|       |#define kFIRCDSdkVersionKey @"FIRCDSdkVersionKey"
+   32|       |
+   33|       |/** If present, is an int32_t wrapped in an NSNumber. */
+   34|      0|#define kFIRCDllAppsCountKey @"FIRCDllAppsCountKey"
+   35|       |
+   36|       |/** If present, is an NSString. */
+   37|      0|#define kFIRCDGoogleAppIDKey @"FIRCDGoogleAppIDKey"
+   38|       |
+   39|       |/** If present, is an NSString. */
+   40|      0|#define kFIRCDBundleIDKey @"FIRCDBundleID"
+   41|       |
+   42|       |/** If present, is a BOOL wrapped in an NSNumber. */
+   43|      0|#define kFIRCDUsingOptionsFromDefaultPlistKey @"FIRCDUsingOptionsFromDefaultPlistKey"
+   44|       |
+   45|       |/** If present, is an NSString. */
+   46|      0|#define kFIRCDLibraryVersionIDKey @"FIRCDLibraryVersionIDKey"
+   47|       |
+   48|       |/** If present, is an NSString. */
+   49|      0|#define kFIRCDFirebaseUserAgentKey @"FIRCDFirebaseUserAgentKey"
+   50|       |
+   51|       |/** Defines the interface of a data object needed to log diagnostics data. */
+   52|       |@protocol FIRCoreDiagnosticsData <NSObject>
+   53|       |
+   54|       |@required
+   55|       |
+   56|       |/** A dictionary containing data (non-exhaustive) to be logged in diagnostics. */
+   57|       |@property(nonatomic) NSDictionary<NSString *, id> *diagnosticObjects;
+   58|       |
+   59|       |@end
+   60|       |
+   61|       |NS_ASSUME_NONNULL_END
+

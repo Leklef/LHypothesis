@@ -1,6 +1,6 @@
 # LHypothesis
 
-[![CI Status](https://img.shields.io/travis/leklef/LHypothesis.svg?style=flat)](https://travis-ci.org/leklef/LHypothesis)
+[![CI Status](https://img.shields.io/travis/leklef/LHypothesis.svg?style=flat)](https://travis-ci.org/lgilyazov/LHypothesis)
 [![Version](https://img.shields.io/cocoapods/v/LHypothesis.svg?style=flat)](https://cocoapods.org/pods/LHypothesis)
 [![License](https://img.shields.io/cocoapods/l/LHypothesis.svg?style=flat)](https://cocoapods.org/pods/LHypothesis)
 [![Platform](https://img.shields.io/cocoapods/p/LHypothesis.svg?style=flat)](https://cocoapods.org/pods/LHypothesis)
@@ -76,11 +76,7 @@ extension PurchaseEvents: AnalyticsEvent {
       return ["product_id": productID]
     }
   }
-  
-  /// User properties to be setted
-  var userProperties: AnalyticsEventUserProperties? {
-    nil
-  }
+
 }
 ```
 
@@ -118,6 +114,10 @@ class MyAnalyticsProvider: AnalyticsProvider {
   
   func logEvent(_ event: AnalyticsEvent) {
     Analytics.logEvent(event.name, parameters: event.parameters)
+  }
+  
+  public func setUserProperty(_ property: String?, forName name: String) {
+    Analytics.setUserProperty(property, forName: name)
   }
   
   func setUserId(_ userId: String?) {

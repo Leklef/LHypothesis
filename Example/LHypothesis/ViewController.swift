@@ -26,13 +26,6 @@ enum TestAnalyticsEvent: AnalyticsEvent {
           return nil
         }
     }
-    
-    var userProperties: AnalyticsEventUserProperties? {
-        switch self {
-        case .viewDidLoad:
-          return nil
-        }
-    }
   
 }
 
@@ -42,13 +35,18 @@ class ViewController: UIViewController {
         super.viewDidLoad()
       
         // 1: Register providers
-        Analytics.shared.register([FirebaseProvider(), AppsFlyerProvider()])
+        Analytics.self <<~ FirebaseProvider() <<~ AppsFlyerProvider()
+        // or
+        //Analytics.register([FirebaseProvider(), AppsFlyerProvider()])
       
-        // 2: Log event (by default log event for all providers)
-        Analytics.shared.log(event: TestAnalyticsEvent.viewDidLoad)
+        // 2 `optional`: Set user properties
+        Analytics.setUserProperty("18", forName: "age")
       
-        // 2 `optional`: Log event for some providers
-        Analytics.shared.log(event: TestAnalyticsEvent.viewDidLoad, providersFilter: [FirebaseProvider.self])
+        // 3: Log event (by default log event for all providers)
+        Analytics.log(event: TestAnalyticsEvent.viewDidLoad)
+      
+        // 3 `optional`: Log event for some providers
+        Analytics.log(event: TestAnalyticsEvent.viewDidLoad, providersFilter: [FirebaseProvider.self])
     }
 
 }

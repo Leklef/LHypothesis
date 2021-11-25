@@ -1296,7 +1296,7 @@ Fuller's blog</a>
 
 ## LHypothesis
 
-Copyright (c) 2021 lenar-craftmaster <lenar8553@gmail.com>
+Copyright (c) 2021 Lenar Gilyazov <lenar8553@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

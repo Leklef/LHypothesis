@@ -6,10 +6,8 @@
 //
 
 public typealias AnalyticsEventParameters = [String: Any]
-public typealias AnalyticsEventUserProperties = [String: String]
 
 public protocol AnalyticsEvent {
   var name: String { get }
   var parameters: AnalyticsEventParameters? { get }
-  var userProperties: AnalyticsEventUserProperties? { get }
 }

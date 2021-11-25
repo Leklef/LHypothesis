@@ -25,6 +25,10 @@ public final class AppsFlyerProvider: AnalyticsProvider {
     AppsFlyerLib.shared().customerUserID = userId
   }
   
+  public func setUserProperty(_ property: String?, forName name: String) {
+    // AppsFlyer doesn't provide this function
+  }
+  
 }
 
 #endif

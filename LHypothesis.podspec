@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'LHypothesis'
-  s.version          = '0.0.1'
+  s.version          = '1.0.0'
   s.summary          = 'Analytics abstraction layer for Swift.'
 
   s.homepage         = 'https://github.com/leklef/LHypothesis'

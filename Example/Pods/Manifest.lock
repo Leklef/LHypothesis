@@ -84,11 +84,11 @@ PODS:
     - GoogleUtilities/Logger
   - GoogleUtilities/UserDefaults (7.6.0):
     - GoogleUtilities/Logger
-  - LHypothesis/AppsFlyer (0.1.0):
+  - LHypothesis/AppsFlyer (0.0.1):
     - AppsFlyerFramework
     - LHypothesis/Core
-  - LHypothesis/Core (0.1.0)
-  - LHypothesis/Firebase (0.1.0):
+  - LHypothesis/Core (0.0.1)
+  - LHypothesis/Firebase (0.0.1):
     - Firebase/Analytics
     - LHypothesis/Core
   - nanopb (2.30908.0):
@@ -136,7 +136,7 @@ SPEC CHECKSUMS:
   GoogleAppMeasurement: 837649ad3987936c232f6717c5680216f6243d24
   GoogleDataTransport: 629c20a4d363167143f30ea78320d5a7eb8bd940
   GoogleUtilities: 684ee790a24f73ebb2d1d966e9711c203f2a4237
-  LHypothesis: aa04487d676774b12ff11a716627ca9a872c0984
+  LHypothesis: 89240a6b0fd36ec3f21474ee8bc6b65905dd7e82
   nanopb: a0ba3315591a9ae0a16a309ee504766e90db0c96
   Nimble: e7e615c0335ee4bf5b0d786685451e62746117d5
   PromisesObjC: 68159ce6952d93e17b2dfe273b8c40907db5ba58

@@ -1,0 +1,7 @@
+coverage_service: cobertura_xml
+workspace: LHypothesis.xcworkspace
+scheme: LHypothesis_Example
+output_directory: reports
+ignore:
+  - Example for LHypothesis/*
+  - Tests/*

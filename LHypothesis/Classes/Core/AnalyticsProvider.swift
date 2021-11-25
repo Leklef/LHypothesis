@@ -10,12 +10,14 @@ public protocol AnalyticsProvider {
   
   func logEvent(_ event: AnalyticsEvent)
   func setUserId(_ userId: String?)
+  func setUserProperty(_ property: String?, forName name: String)
 }
 
 extension AnalyticsProvider {
   
   public var name: String {
-    String(describing: self)
+    let type = type(of: self)
+    return String(describing: type)
   }
   
 }
