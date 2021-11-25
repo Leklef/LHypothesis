@@ -2,22 +2,22 @@
 # * https://www.objc.io/issues/6-build-tools/travis-ci/
 # * https://github.com/supermarin/xcpretty#usage
 
+language: swift
 osx_image: xcode13.1
 
 env:
   matrix:
-    - TEST_SDK=iphonesimulator15.0 OS=15.0 NAME='iPhone XR'
-    - TEST_SDK=iphonesimulator15.0 OS=15.0 NAME='iPhone 12'
+    - TEST_SDK=iphonesimulator OS=15.0 NAME='iPhone 12'
 
-language: swift
- cache: cocoapods
- podfile: Example/Podfile
- before_install:
- - gem install cocoapods # Since Travis is not always on latest version
- - pod install --project-directory=Example
+cache: cocoapods
+podfile: Example/Podfile
+before_install:
+  - gem install xcpretty
+  - gem install slather
+  - gem install cocoapods
+  - pod install --project-directory=Example
 script:
   - set -o pipefail && xcodebuild test -enableCodeCoverage YES -workspace Example/LHypothesis.xcworkspace -scheme LHypothesis-Example -sdk $TEST_SDK -destination "platform=iOS Simulator,OS=$OS,name=$NAME" ONLY_ACTIVE_ARCH=YES | xcpretty
-  - pod lib lint
 
 after_success:
   - slather

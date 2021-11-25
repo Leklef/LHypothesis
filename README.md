@@ -1,6 +1,7 @@
 # LHypothesis
 
-[![CI Status](https://img.shields.io/travis/leklef/LHypothesis.svg?style=flat)](https://travis-ci.org/lgilyazov/LHypothesis)
+[![Build Status](https://app.travis-ci.com/Leklef/LHypothesis.svg?branch=master)](https://app.travis-ci.com/Leklef/LHypothesis)
+[![codecov](https://codecov.io/gh/Leklef/LHypothesis/branch/master/graph/badge.svg?token=QVZQQB91ZJ)](https://codecov.io/gh/Leklef/LHypothesis)
 [![Version](https://img.shields.io/cocoapods/v/LHypothesis.svg?style=flat)](https://cocoapods.org/pods/LHypothesis)
 [![License](https://img.shields.io/cocoapods/l/LHypothesis.svg?style=flat)](https://cocoapods.org/pods/LHypothesis)
 [![Platform](https://img.shields.io/cocoapods/p/LHypothesis.svg?style=flat)](https://cocoapods.org/pods/LHypothesis)

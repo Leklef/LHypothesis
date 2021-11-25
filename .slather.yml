@@ -1,7 +1,12 @@
 coverage_service: cobertura_xml
-workspace: LHypothesis.xcworkspace
-scheme: LHypothesis_Example
+arch: x86_64
+xcodeproj: Example/LHypothesis.xcodeproj
+workspace: Example/LHypothesis.xcworkspace
+scheme: LHypothesis-Example
+configuration: Release
+source_directory: LHypothesis/Classes
 output_directory: reports
 ignore:
-  - Example for LHypothesis/*
-  - Tests/*
+  - Example/LHypothesis/*
+  - Example/Pods/*
+  - Example/Tests/*

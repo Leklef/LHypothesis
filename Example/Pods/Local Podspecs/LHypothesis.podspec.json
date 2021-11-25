@@ -1,6 +1,6 @@
 {
   "name": "LHypothesis",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "summary": "Analytics abstraction layer for Swift.",
   "homepage": "https://github.com/leklef/LHypothesis",
   "license": {
@@ -12,7 +12,7 @@
   },
   "source": {
     "git": "https://github.com/leklef/LHypothesis.git",
-    "tag": "0.0.1"
+    "tag": "1.0.0"
   },
   "social_media_url": "https://twitter.com/lenar_gilyazov",
   "swift_versions": "5.0",
