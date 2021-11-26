@@ -13,6 +13,7 @@ Analytics abstraction layer for Swift.
 * [Example](#example)
 * [Installation](#installation)
     * [CocoaPods](#cocoapods)
+    * [Swift Package Manager](#swift-package-manager)
 * [Getting started](#getting-started)
     * [Defining Events](#defining-events)
     * [Usage](#usage)
@@ -36,6 +37,10 @@ pod 'LHypothesis'
 pod 'LHypothesis/Firebase' # using with built-in FirebaseProvider
 pod 'LHypothesis/AppsFlyer' # using with built-in AppsFlyerProvider
 ```
+
+### Swift Package Manager
+
+Also you can install LHypothesis via the Swift Package Manager
 
 ## Getting started
 
