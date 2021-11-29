@@ -91,19 +91,19 @@ extension PurchaseEvents: AnalyticsEvent {
 First of all, you should register providers. A prodiver is a wrapper for an actual analytics service such as Firebase and Fabric Answers. It's recommended to register providers in `application(_:didFinishLaunchingWithOptions:)`.
 
 ```swift
-Analytics.shared.register([FirebaseProvider(), AppsFlyerProvider()])
+Analytics.register([FirebaseProvider(), AppsFlyerProvider()])
 ```
 
 Then you can log the events:
 
 ```swift
-Analytics.shared.log(event: .purchase(providerID: 1, price: 12.0))
+Analytics.log(event: .purchase(providerID: 1, price: 12.0))
 ```
 
 This method log events for all providers. If you want to log an events for specific providers, use the `providersFilter`
 
 ```swift
-Analytics.shared.log(event: .purchase(providerID: 1, price: 12.0), providersFilter: [FirebaseProvider.self])
+Analytics.log(event: .purchase(providerID: 1, price: 12.0), providersFilter: [FirebaseProvider.self])
 ```
 
 ### Built-in Providers
