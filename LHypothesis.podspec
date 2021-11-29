@@ -1,12 +1,12 @@
 Pod::Spec.new do |s|
   s.name             = 'LHypothesis'
-  s.version          = '1.1.0'
+  s.version          = '1.1.1'
   s.summary          = 'Analytics abstraction layer for Swift.'
 
-  s.homepage         = 'https://github.com/leklef/LHypothesis'
+  s.homepage         = 'https://github.com/lgilyazov/LHypothesis'
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
-  s.author           = { 'Lenar Gilyazov' => 'lenar8553@gmail.com' }
-  s.source           = { :git => 'https://github.com/leklef/LHypothesis.git', :tag => s.version.to_s }
+  s.author           = { 'Lenar Gilyazov' => 'l.gilyazov@ya.ru' }
+  s.source           = { :git => 'https://github.com/lgilyazov/LHypothesis.git', :tag => s.version.to_s }
   s.social_media_url = 'https://twitter.com/lenar_gilyazov'
 
   s.swift_version    = "5.0"
