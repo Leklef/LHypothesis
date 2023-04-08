@@ -34,7 +34,9 @@ platform :ios do
 
   def release(type)
 	  podspecName = "LHypothesis.podspec"
-	  ensure_git_branch
+	  ensure_git_branch(
+      branch: '^release/.*$'
+    )
 	  ensure_git_status_clean
     lib_lint
     version = version_bump_podspec(path: podspecName, bump_type: type)
