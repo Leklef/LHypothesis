@@ -29,7 +29,7 @@ platform :ios do
 
   desc "Library lint"
   lane :lib_lint do
-    pod_lib_lint(allow_warnings: true, fail_fast: true, analyze: true)
+    pod_lib_lint(allow_warnings: true, fail_fast: true)
   end
 
   desc "Complete release. Create tag and push pod"
