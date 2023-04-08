@@ -45,7 +45,15 @@ Release a new version with a major bump_type
 [bundle exec] fastlane ios code_coverage
 ```
 
-Build, test and send code coverage
+Build, test and generate code coverage
+
+### ios lib_lint
+
+```sh
+[bundle exec] fastlane ios lib_lint
+```
+
+Library lint
 
 ----
 
