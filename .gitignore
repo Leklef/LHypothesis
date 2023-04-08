@@ -21,6 +21,7 @@ DerivedData/
 !default.mode2v3
 *.perspectivev3
 !default.perspectivev3
+.DS_Store
 
 ## Obj-C/Swift specific
 *.hmap
@@ -62,9 +63,7 @@ Pods/
 # Carthage
 #
 # Add this line if you want to avoid checking in source code from Carthage dependencies.
-# Carthage/Checkouts
-
-Carthage/Build/
+Carthage/Checkouts
 
 # Accio dependency management
 Dependencies/
@@ -88,3 +87,5 @@ fastlane/test_output
 # https://github.com/johnno1962/injectionforxcode
 
 iOSInjectionProject/
+
+reports/

@@ -1,6 +1,0 @@
-framework module LHypothesis {
-  umbrella header "LHypothesis-umbrella.h"
-
-  export *
-  module * { export * }
-}
