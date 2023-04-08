@@ -3,11 +3,11 @@ arch: arm64
 xcodeproj: Example/LHypothesis.xcodeproj
 workspace: Example/LHypothesis.xcworkspace
 scheme: LHypothesis-Example
-configuration: Debug
-source_directory: LHypothesis/Classes
+# configuration: Release
+source_directory: Classes
 output_directory: reports
 ignore:
-  - LHypothesis/Classes/Providers/*
+  - Classes/Providers/*
   - Example/LHypothesis/*
   - Example/Pods/*
   - Example/Tests/*

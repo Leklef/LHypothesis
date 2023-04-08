@@ -16,17 +16,6 @@ platform :ios do
     release("major")
   end
 
-  desc "Build, test and generate code coverage"
-  lane :code_coverage do
-    cocoapods(repo_update: true, silent: true, podfile: 'Example/Podfile')
-    scan(
-      workspace: 'Example/LHypothesis.xcworkspace',
-      scheme: 'LHypothesis-Example',
-      devices: ["iPhone 14"]
-    )
-    slather
-  end
-
   desc "Library lint"
   lane :lib_lint do
     pod_lib_lint(allow_warnings: true, fail_fast: true)

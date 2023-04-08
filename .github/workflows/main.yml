@@ -18,11 +18,13 @@ jobs:
      - uses: actions/checkout@v3
      - name: Install dependencies
        run: bundle install
-     - name: Build, test and send code coverage
-       run: bundle exec fastlane code_coverage
+     - name: Build and test
+       run: swift test --enable-code-coverage
+     - name: Coverage output
+       run: xcrun llvm-cov export -format="lcov" .build/debug/LHypothesisPackageTests.xctest/Contents/MacOS/LHypothesisPackageTests -instr-profile .build/debug/codecov/default.profdata > info.lcov
      - uses: codecov/codecov-action@v3
        with:
-          files: ./reports/cobertura.xml
+          files: ./info.lcov
           fail_ci_if_error: true
      - name: Complete release
        run: bundle exec fastlane complete_release
