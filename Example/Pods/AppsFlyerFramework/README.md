@@ -1,11 +1,13 @@
-<img src="https://www.appsflyer.com/wp-content/uploads/2016/11/logo-1.svg"  width="450">
+<img src="https://raw.githubusercontent.com/AppsFlyerSDK/appsflyer-capacitor-plugin/main/assets/AFLogo_primary.png"  width="450">
 
 # AppsFlyerFramework
 
 [![Version](https://img.shields.io/cocoapods/v/AppsFlyerFramework.svg?style=flat)](http://cocoapods.org/pods/AppsFlyerFramework)
 [![Carthage Compatible](https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat)](https://github.com/Carthage/Carthage)
 
-In order to download and/or get instruction on how to integrate AppsFlyer iOS SDK please visit the following page - [iOS SDK](https://support.appsflyer.com/hc/en-us/sections/201691546-iOS-SDK)
+In order to download and/or get instruction on how to integrate AppsFlyer iOS SDK please visit the following page - [iOS SDK](https://support.appsflyer.com/hc/en-us/articles/207032066-AppsFlyer-SDK-Integration-iOS).
+
+Release Notes you can find [here](https://support.appsflyer.com/hc/en-us/articles/115001224823#ios-sdk-v6-release-notes).
 
 ---
 

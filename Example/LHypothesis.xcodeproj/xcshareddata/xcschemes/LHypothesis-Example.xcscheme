@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "1310"
-   version = "1.3">
+   LastUpgradeVersion = "1430"
+   version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
       buildImplicitDependencies = "YES">
@@ -14,23 +14,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "607FACCF1AFB9204008FA782"
-               BuildableName = "LHypothesis_Example.app"
-               BlueprintName = "LHypothesis_Example"
-               ReferencedContainer = "container:LHypothesis.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "YES"
-            buildForProfiling = "NO"
-            buildForArchiving = "NO"
-            buildForAnalyzing = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "607FACE41AFB9204008FA782"
-               BuildableName = "LHypothesis_Tests.xctest"
-               BlueprintName = "LHypothesis_Tests"
+               BlueprintIdentifier = "AE86427429E15730009D3391"
+               BuildableName = "LHypothesis-Example.app"
+               BlueprintName = "LHypothesis-Example"
                ReferencedContainer = "container:LHypothesis.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -41,38 +27,7 @@
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES"
-      codeCoverageEnabled = "YES"
-      onlyGenerateCoverageForSpecifiedTargets = "YES">
-      <MacroExpansion>
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "607FACCF1AFB9204008FA782"
-            BuildableName = "LHypothesis_Example.app"
-            BlueprintName = "LHypothesis_Example"
-            ReferencedContainer = "container:LHypothesis.xcodeproj">
-         </BuildableReference>
-      </MacroExpansion>
-      <CodeCoverageTargets>
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "3D0A1DD2EF8E95918092D59F181BC288"
-            BuildableName = "LHypothesis.framework"
-            BlueprintName = "LHypothesis"
-            ReferencedContainer = "container:Pods/Pods.xcodeproj">
-         </BuildableReference>
-      </CodeCoverageTargets>
-      <Testables>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "607FACE41AFB9204008FA782"
-               BuildableName = "LHypothesis_Tests.xctest"
-               BlueprintName = "LHypothesis_Tests"
-               ReferencedContainer = "container:LHypothesis.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
-      </Testables>
+      shouldAutocreateTestPlan = "YES">
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"
@@ -88,9 +43,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "607FACCF1AFB9204008FA782"
-            BuildableName = "LHypothesis_Example.app"
-            BlueprintName = "LHypothesis_Example"
+            BlueprintIdentifier = "AE86427429E15730009D3391"
+            BuildableName = "LHypothesis-Example.app"
+            BlueprintName = "LHypothesis-Example"
             ReferencedContainer = "container:LHypothesis.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -105,9 +60,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "607FACCF1AFB9204008FA782"
-            BuildableName = "LHypothesis_Example.app"
-            BlueprintName = "LHypothesis_Example"
+            BlueprintIdentifier = "AE86427429E15730009D3391"
+            BuildableName = "LHypothesis-Example.app"
+            BlueprintName = "LHypothesis-Example"
             ReferencedContainer = "container:LHypothesis.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
