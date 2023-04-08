@@ -1,6 +1,6 @@
 # LHypothesis
 
-[![Build Status](https://github.com/lgilyazov/LHypothesis/actions/workflows/stable-main.yml/badge.svg)]
+![Build Status](https://github.com/lgilyazov/LHypothesis/actions/workflows/stable-main.yml/badge.svg)
 [![codecov](https://codecov.io/gh/lgilyazov/LHypothesis/branch/master/graph/badge.svg?token=QVZQQB91ZJ)](https://codecov.io/gh/lgilyazov/LHypothesis)
 [![Version](https://img.shields.io/cocoapods/v/LHypothesis.svg?style=flat)](https://cocoapods.org/pods/LHypothesis)
 [![License](https://img.shields.io/cocoapods/l/LHypothesis.svg?style=flat)](https://cocoapods.org/pods/LHypothesis)
