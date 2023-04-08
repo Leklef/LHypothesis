@@ -16,19 +16,33 @@ platform :ios do
     release("major")
   end
 
+  desc "Build, test and generate code coverage"
+  lane :code_coverage do
+    cocoapods(repo_update: true, silent: true, podfile: 'Example/Podfile')
+    scan(
+      workspace: 'Example/LHypothesis.xcworkspace',
+      scheme: 'LHypothesis-Example',
+      devices: ["iPhone 14"]
+    )
+    slather
+  end
+
+  desc "Library lint"
+  lane :lib_lint do
+    pod_lib_lint(allow_warnings: true, fail_fast: true, analyze: true)
+  end
+
   def release(type)
 	  podspecName = "LHypothesis.podspec"
 	  ensure_git_branch
 	  ensure_git_status_clean
-    pod_lib_lint
+    lib_lint
     version = version_bump_podspec(path: podspecName, bump_type: type)
-    carthage(command: "build", no_skip_current: true, use_xcframeworks: true)
+    carthage(command: "build", no_skip_current: true, use_xcframeworks: true, platform: ['Mac', 'iOS', 'tvOS'])
     git_add(path: podspecName)
     git_commit(path: [podspecName], message: "#{version} release")
     add_git_tag(tag: "#{version}")
     push_to_git_remote
     pod_push(allow_warnings: true, verbose: true)
-
-    # TODO: Code coverage
   end
 end

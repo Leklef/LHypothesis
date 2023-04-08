@@ -1,0 +1,17 @@
+name: pr-check
+
+on:
+  pull_request
+    
+env:
+  FASTLANE_XCODE_LIST_TIMEOUT: 12
+
+jobs:
+  lib-lint:
+     runs-on: macos-latest
+     steps:
+     - uses: actions/checkout@v3
+     - name: Install dependencies
+       run: bundle install
+     - name: Lib lint
+       run: bundle exec fastlane lib_lint

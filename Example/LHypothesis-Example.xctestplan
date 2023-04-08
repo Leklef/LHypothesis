@@ -1,0 +1,37 @@
+{
+  "configurations" : [
+    {
+      "id" : "2313F125-4C55-4D0D-9A04-4D43443A57F8",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : {
+      "targets" : [
+        {
+          "containerPath" : "container:Pods\/Pods.xcodeproj",
+          "identifier" : "3D0A1DD2EF8E95918092D59F181BC288",
+          "name" : "LHypothesis"
+        }
+      ]
+    },
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:LHypothesis.xcodeproj",
+      "identifier" : "AE86427429E15730009D3391",
+      "name" : "LHypothesis-Example"
+    }
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:Pods\/Pods.xcodeproj",
+        "identifier" : "7F98BF8F5C9F58C9499D5962E25B2C1A",
+        "name" : "LHypothesis-Unit-Tests"
+      }
+    }
+  ],
+  "version" : 1
+}

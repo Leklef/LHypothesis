@@ -39,6 +39,14 @@ Release a new version with a minor bump_type
 
 Release a new version with a major bump_type
 
+### ios code_coverage
+
+```sh
+[bundle exec] fastlane ios code_coverage
+```
+
+Build, test and send code coverage
+
 ----
 
 This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.

@@ -2438,43 +2438,7 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		0FAE7040AB990731970C9B7F023B7AC9 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = 203BE731B9143354B56927B39B84BEF2 /* LHypothesis.debug.xcconfig */;
-			buildSettings = {
-				CLANG_ENABLE_OBJC_WEAK = NO;
-				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
-				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
-				CURRENT_PROJECT_VERSION = 1;
-				DEFINES_MODULE = YES;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				GCC_PREFIX_HEADER = "Target Support Files/LHypothesis/LHypothesis-prefix.pch";
-				INFOPLIST_FILE = "Target Support Files/LHypothesis/LHypothesis-Info.plist";
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				MACH_O_TYPE = staticlib;
-				MODULEMAP_FILE = "Target Support Files/LHypothesis/LHypothesis.modulemap";
-				PRODUCT_MODULE_NAME = LHypothesis;
-				PRODUCT_NAME = LHypothesis;
-				SDKROOT = iphoneos;
-				SKIP_INSTALL = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ";
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				VERSIONING_SYSTEM = "apple-generic";
-				VERSION_INFO_PREFIX = "";
-			};
-			name = Debug;
-		};
-		206EA5D8F2877FF6E97C8D5AFFE3E556 /* Debug */ = {
+		146ED29975DAED2533821650DD29D0DE /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 1B4B6CF4EE78337722E8CFA8A4B07058 /* LHypothesis.unit-tests.debug.xcconfig */;
 			buildSettings = {
@@ -2492,7 +2456,7 @@
 				PRODUCT_NAME = "LHypothesis-Unit-Tests";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ";
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 5.1;
 			};
 			name = Debug;
 		};
@@ -2633,66 +2597,6 @@
 				VERSION_INFO_PREFIX = "";
 			};
 			name = Debug;
-		};
-		4C99AA9D205392B20F3DCD44ECA80FBA /* Release */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = 91D1BD92D738898E17433D769D62DC2A /* LHypothesis.unit-tests.release.xcconfig */;
-			buildSettings = {
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
-				CLANG_ENABLE_OBJC_WEAK = NO;
-				CODE_SIGNING_ALLOWED = YES;
-				CODE_SIGNING_REQUIRED = YES;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
-				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
-				GCC_PREFIX_HEADER = "Target Support Files/LHypothesis/LHypothesis-Unit-Tests-prefix.pch";
-				INFOPLIST_FILE = "Target Support Files/LHypothesis/LHypothesis-Unit-Tests-Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
-				PRODUCT_NAME = "LHypothesis-Unit-Tests";
-				SDKROOT = iphoneos;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ";
-				SWIFT_VERSION = 5.0;
-				VALIDATE_PRODUCT = YES;
-			};
-			name = Release;
-		};
-		5F5D67663E0F914A1DEC70781F0E9F76 /* Release */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = CFA1F6458D7C8CE116B2D14103655BCE /* LHypothesis.release.xcconfig */;
-			buildSettings = {
-				CLANG_ENABLE_OBJC_WEAK = NO;
-				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
-				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
-				CURRENT_PROJECT_VERSION = 1;
-				DEFINES_MODULE = YES;
-				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 1;
-				DYLIB_INSTALL_NAME_BASE = "@rpath";
-				GCC_PREFIX_HEADER = "Target Support Files/LHypothesis/LHypothesis-prefix.pch";
-				INFOPLIST_FILE = "Target Support Files/LHypothesis/LHypothesis-Info.plist";
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
-				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@loader_path/Frameworks",
-				);
-				MACH_O_TYPE = staticlib;
-				MODULEMAP_FILE = "Target Support Files/LHypothesis/LHypothesis.modulemap";
-				PRODUCT_MODULE_NAME = LHypothesis;
-				PRODUCT_NAME = LHypothesis;
-				SDKROOT = iphoneos;
-				SKIP_INSTALL = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ";
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				VALIDATE_PRODUCT = YES;
-				VERSIONING_SYSTEM = "apple-generic";
-				VERSION_INFO_PREFIX = "";
-			};
-			name = Release;
 		};
 		8134A43018E1B20EAC15AC7EBAD7A206 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -2879,6 +2783,29 @@
 				VALIDATE_PRODUCT = YES;
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
+			};
+			name = Release;
+		};
+		9916ABB701C3B2B2887B6B2146129976 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 91D1BD92D738898E17433D769D62DC2A /* LHypothesis.unit-tests.release.xcconfig */;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGNING_ALLOWED = YES;
+				CODE_SIGNING_REQUIRED = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
+				GCC_PREFIX_HEADER = "Target Support Files/LHypothesis/LHypothesis-Unit-Tests-prefix.pch";
+				INFOPLIST_FILE = "Target Support Files/LHypothesis/LHypothesis-Unit-Tests-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_NAME = "LHypothesis-Unit-Tests";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ";
+				SWIFT_VERSION = 5.1;
+				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
@@ -3206,6 +3133,42 @@
 			};
 			name = Release;
 		};
+		E87E187ABBACF148629C670639625B42 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 203BE731B9143354B56927B39B84BEF2 /* LHypothesis.debug.xcconfig */;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GCC_PREFIX_HEADER = "Target Support Files/LHypothesis/LHypothesis-prefix.pch";
+				INFOPLIST_FILE = "Target Support Files/LHypothesis/LHypothesis-Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MACH_O_TYPE = staticlib;
+				MODULEMAP_FILE = "Target Support Files/LHypothesis/LHypothesis.modulemap";
+				PRODUCT_MODULE_NAME = LHypothesis;
+				PRODUCT_NAME = LHypothesis;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ";
+				SWIFT_VERSION = 5.1;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Debug;
+		};
 		EE71F868C112D63CA1A6DEFFBB1D8305 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = D4F8BDD4E4E4A48DF5D6F364D11FC137 /* PromisesObjC.debug.xcconfig */;
@@ -3271,6 +3234,43 @@
 				VERSION_INFO_PREFIX = "";
 			};
 			name = Debug;
+		};
+		F290AD38828F1D3DC25D44DC2A71C530 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = CFA1F6458D7C8CE116B2D14103655BCE /* LHypothesis.release.xcconfig */;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GCC_PREFIX_HEADER = "Target Support Files/LHypothesis/LHypothesis-prefix.pch";
+				INFOPLIST_FILE = "Target Support Files/LHypothesis/LHypothesis-Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				IPHONEOS_DEPLOYMENT_TARGET = 13.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MACH_O_TYPE = staticlib;
+				MODULEMAP_FILE = "Target Support Files/LHypothesis/LHypothesis.modulemap";
+				PRODUCT_MODULE_NAME = LHypothesis;
+				PRODUCT_NAME = LHypothesis;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ";
+				SWIFT_VERSION = 5.1;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
@@ -3341,8 +3341,8 @@
 		6D5A093F4BC3DEA6F9041CDB3090FDCF /* Build configuration list for PBXNativeTarget "LHypothesis" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				0FAE7040AB990731970C9B7F023B7AC9 /* Debug */,
-				5F5D67663E0F914A1DEC70781F0E9F76 /* Release */,
+				E87E187ABBACF148629C670639625B42 /* Debug */,
+				F290AD38828F1D3DC25D44DC2A71C530 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -3386,8 +3386,8 @@
 		C655D38EEF63D9B9D1C2A5314AAB0E8D /* Build configuration list for PBXNativeTarget "LHypothesis-Unit-Tests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				206EA5D8F2877FF6E97C8D5AFFE3E556 /* Debug */,
-				4C99AA9D205392B20F3DCD44ECA80FBA /* Release */,
+				146ED29975DAED2533821650DD29D0DE /* Debug */,
+				9916ABB701C3B2B2887B6B2146129976 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
