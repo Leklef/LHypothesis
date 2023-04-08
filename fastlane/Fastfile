@@ -32,6 +32,15 @@ platform :ios do
     pod_lib_lint(allow_warnings: true, fail_fast: true, analyze: true)
   end
 
+  desc "Complete release. Create tag and push pod"
+  lane :complete_release do
+    podspecName = "LHypothesis.podspec"
+    version = version_get_podspec(path: podspecName)
+    add_git_tag(tag: "#{version}")
+    push_git_tags
+    pod_push(allow_warnings: true, verbose: true)
+  end
+
   def release(type)
 	  podspecName = "LHypothesis.podspec"
 	  ensure_git_branch(
@@ -43,8 +52,6 @@ platform :ios do
     carthage(command: "build", no_skip_current: true, use_xcframeworks: true, platform: ['Mac', 'iOS', 'tvOS'])
     git_add(path: podspecName)
     git_commit(path: [podspecName], message: "#{version} release")
-    add_git_tag(tag: "#{version}")
     push_to_git_remote
-    pod_push(allow_warnings: true, verbose: true)
   end
 end
