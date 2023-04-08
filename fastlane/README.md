@@ -39,14 +39,6 @@ Release a new version with a minor bump_type
 
 Release a new version with a major bump_type
 
-### ios code_coverage
-
-```sh
-[bundle exec] fastlane ios code_coverage
-```
-
-Build, test and generate code coverage
-
 ### ios lib_lint
 
 ```sh

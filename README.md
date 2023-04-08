@@ -1,10 +1,10 @@
 # LHypothesis
 
-![Build Status](https://github.com/lgilyazov/LHypothesis/actions/workflows/stable-main.yml/badge.svg)
-[![codecov](https://codecov.io/gh/lgilyazov/LHypothesis/branch/master/graph/badge.svg?token=QVZQQB91ZJ)](https://codecov.io/gh/lgilyazov/LHypothesis)
-[![Version](https://img.shields.io/cocoapods/v/LHypothesis.svg?style=flat)](https://cocoapods.org/pods/LHypothesis)
-[![License](https://img.shields.io/cocoapods/l/LHypothesis.svg?style=flat)](https://cocoapods.org/pods/LHypothesis)
-[![Platform](https://img.shields.io/cocoapods/p/LHypothesis.svg?style=flat)](https://cocoapods.org/pods/LHypothesis)
+![Build Status](https://github.com/lgilyazov/LHypothesis/actions/workflows/main.yml/badge.svg)
+[![codecov](https://codecov.io/gh/lgilyazov/LHypothesis/branch/main/graph/badge.svg?token=QVZQQB91ZJ)](https://codecov.io/gh/lgilyazov/LHypothesis)
+![Version](https://img.shields.io/cocoapods/v/LHypothesis?style=plastic)
+![License](https://img.shields.io/cocoapods/l/LHypothesis?style=plastic)
+![Platform](https://img.shields.io/cocoapods/p/LHypothesis?style=plastic)
 
 Analytics abstraction layer for Swift.
 
