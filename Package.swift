@@ -1,35 +1,57 @@
-// swift-tools-version:5.5
-// The swift-tools-version declares the minimum version of Swift required to build this package.
+// swift-tools-version:5.7
 
 import PackageDescription
 
 let package = Package(
   name: "LHypothesis",
   platforms: [
-    .macOS(.v10_15), .iOS(.v11), .tvOS(.v12)
+    .macOS(.v10_15), .iOS(.v13), .tvOS(.v13)
   ],
   products: [
     .library(
       name: "LHypothesis",
-      targets: ["LHypothesis"])
+      targets: ["LHypothesis"]
+    ),
+    .library(
+      name: "LHypothesisAppsFlyer",
+      targets: ["LHypothesisAppsFlyer"]
+    ),
+    .library(
+      name: "LHypothesisFirebase",
+      targets: ["LHypothesisFirebase"]
+    )
   ],
-  dependencies: [],
+  dependencies: [
+    .package(url: "https://github.com/AppsFlyerSDK/AppsFlyerFramework", from: "6.10.0"),
+    .package(url: "https://github.com/firebase/firebase-ios-sdk", from: "10.7.0")
+  ],
   targets: [
     .target(
       name: "LHypothesis",
-      path: "./LHypothesis/Classes/Core"
+      path: "./Sources/Core"
     ),
     .target(
       name: "LHypothesisAppsFlyer",
-      dependencies: ["LHypothesis"],
-      path: "./LHypothesis/Classes/Providers",
+      dependencies: [
+        .target(name: "LHypothesis"),
+        .product(name: "AppsFlyerLib", package: "AppsFlyerFramework")
+      ],
+      path: "./Sources/Providers",
       exclude: ["FirebaseProvider.swift"]
     ),
     .target(
       name: "LHypothesisFirebase",
-      dependencies: ["LHypothesis"],
-      path: "./LHypothesis/Classes/Providers",
+      dependencies: [
+        .target(name: "LHypothesis"),
+        .product(name: "FirebaseAnalytics", package: "firebase-ios-sdk")
+      ],
+      path: "./Sources/Providers",
       exclude: ["AppsFlyerProvider.swift"]
+    ),
+    .testTarget(
+        name: "LHypothesisTests",
+        dependencies: ["LHypothesis"],
+        path: "./Tests"
     )
   ],
   swiftLanguageVersions: [.v5]

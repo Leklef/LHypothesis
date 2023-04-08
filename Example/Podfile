@@ -1,15 +1,9 @@
 use_frameworks!
 
-platform :ios, '12.0'
+platform :ios, '13.0'
 
-target 'LHypothesis_Example' do
+target 'LHypothesis-Example' do
+  pod 'LHypothesis', :path => '../', :testspecs => ['Tests']
   pod 'LHypothesis/Firebase', :path => '../'
   pod 'LHypothesis/AppsFlyer', :path => '../'
-  
-  target 'LHypothesis_Tests' do
-    inherit! :search_paths
-    
-    pod 'Quick'
-    pod 'Nimble'
-  end
 end

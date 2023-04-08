@@ -1,5 +1,5 @@
 coverage_service: cobertura_xml
-arch: x86_64
+arch: arm64
 xcodeproj: Example/LHypothesis.xcodeproj
 workspace: Example/LHypothesis.xcworkspace
 scheme: LHypothesis-Example

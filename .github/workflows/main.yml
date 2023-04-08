@@ -1,0 +1,28 @@
+name: main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [ "main" ]
+    
+env:
+  FASTLANE_XCODE_LIST_TIMEOUT: 12
+
+jobs:
+  code-coverage:
+     runs-on: macos-latest
+     steps:
+     - uses: actions/checkout@v3
+     - name: Install dependencies
+       run: bundle install
+     - name: Build, test and send code coverage
+       run: bundle exec fastlane code_coverage
+     - uses: codecov/codecov-action@v3
+       with:
+          files: ./reports/cobertura.xml
+          fail_ci_if_error: true
+     - name: Complete release
+       run: bundle exec fastlane complete_release
