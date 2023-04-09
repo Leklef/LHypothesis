@@ -12,9 +12,9 @@
     "codeCoverage" : {
       "targets" : [
         {
-          "containerPath" : "container:Pods\/Pods.xcodeproj",
-          "identifier" : "3D0A1DD2EF8E95918092D59F181BC288",
-          "name" : "LHypothesis"
+          "containerPath" : "container:LHypothesis.xcodeproj",
+          "identifier" : "3169F3088DBC946F0DFDFCD5",
+          "name" : "LHypothesis-iOS"
         }
       ]
     },
@@ -27,9 +27,9 @@
   "testTargets" : [
     {
       "target" : {
-        "containerPath" : "container:Pods\/Pods.xcodeproj",
-        "identifier" : "7F98BF8F5C9F58C9499D5962E25B2C1A",
-        "name" : "LHypothesis-Unit-Tests"
+        "containerPath" : "container:LHypothesis.xcodeproj",
+        "identifier" : "8433C4FEE2A1853E9235210C",
+        "name" : "LHypothesisTests"
       }
     }
   ],

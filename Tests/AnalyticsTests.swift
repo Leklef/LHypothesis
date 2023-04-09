@@ -1,5 +1,9 @@
 import XCTest
+#if canImport(LHypothesis_iOS)
+@testable import LHypothesis_iOS
+#else
 @testable import LHypothesis
+#endif
 
 final class AnalyticsTests: XCTestCase {
     
