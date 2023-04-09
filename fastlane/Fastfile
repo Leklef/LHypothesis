@@ -38,8 +38,6 @@ platform :ios do
     end
   end
 
-  private
-
   def release(type)
 	  podspecName = "LHypothesis.podspec"
 	  ensure_git_branch(
