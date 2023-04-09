@@ -19,7 +19,7 @@ jobs:
      - name: Install dependencies
        run: bundle install
      - uses: tuist/tuist-action@0.13.0
-        with:
+       with:
           command: 'generate'
           arguments: ''
      - name: Build, test and generate coverage report
