@@ -47,6 +47,14 @@ Release a new version with a major bump_type
 
 Library lint
 
+### ios code_coverage
+
+```sh
+[bundle exec] fastlane ios code_coverage
+```
+
+Create code coverage report
+
 ### ios complete_release
 
 ```sh

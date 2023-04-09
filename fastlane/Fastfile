@@ -21,6 +21,12 @@ platform :ios do
     pod_lib_lint(allow_warnings: true, fail_fast: true)
   end
 
+  desc "Create code coverage report"
+  lane :code_coverage do
+    scan(workspace: "LHypothesis.xcworkspace", scheme: "LHypothesisTests-iOS", devices: ["iPhone 14"], clean: true)
+    slather
+  end
+
   desc "Complete release. Create tag and push pod"
   lane :complete_release do
     podspecName = "LHypothesis.podspec"
@@ -31,6 +37,8 @@ platform :ios do
       pod_push(allow_warnings: true, verbose: true)
     end
   end
+
+  private
 
   def release(type)
 	  podspecName = "LHypothesis.podspec"
@@ -43,5 +51,10 @@ platform :ios do
     git_add(path: podspecName)
     git_commit(path: [podspecName], message: "#{version} release")
     push_to_git_remote
+  end
+
+  def carthage_release
+    carthage(command: "build", platform: "Mac,iOS,tvOS", configuration: "Release", use_xcframeworks: true, no_skip_current: true)
+    git_add(path: './Carthage/*')
   end
 end

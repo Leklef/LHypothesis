@@ -1,13 +1,8 @@
 coverage_service: cobertura_xml
-arch: arm64
-xcodeproj: Example/LHypothesis.xcodeproj
-workspace: Example/LHypothesis.xcworkspace
-scheme: LHypothesis-Example
-# configuration: Release
+xcodeproj: LHypothesis.xcodeproj
+workspace: LHypothesis.xcworkspace
+scheme: LHypothesisTests-iOS
 source_directory: Classes
 output_directory: reports
 ignore:
   - Classes/Providers/*
-  - Example/LHypothesis/*
-  - Example/Pods/*
-  - Example/Tests/*
