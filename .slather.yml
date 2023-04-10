@@ -6,3 +6,4 @@ source_directory: Classes
 output_directory: reports
 ignore:
   - Classes/Providers/*
+  - Tests/*
