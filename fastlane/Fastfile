@@ -54,6 +54,6 @@ platform :ios do
 
   def carthage_release
     carthage(command: "build", platform: "Mac,iOS,tvOS", configuration: "Release", use_xcframeworks: true, no_skip_current: true)
-    git_add(path: './Carthage/*')
+    git_add(path: './Carthage/**')
   end
 end
