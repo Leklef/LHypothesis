@@ -1,0 +1,4 @@
+framework module LHypothesis_tvOS {
+  header "LHypothesis_tvOS-Swift.h"
+  requires objc
+}

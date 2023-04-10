@@ -1,0 +1,135 @@
+{
+  "Mac" : [
+    {
+      "swiftToolchainVersion" : "5.7.2 (swiftlang-5.7.2.135.5 clang-1400.0.29.51)",
+      "hash" : "b55cef03fe61685008bc5530101184e8722d662c819947f3a55b9887008c5542",
+      "name" : "LHypothesis_Mac",
+      "container" : "LHypothesis_Mac.xcframework",
+      "identifier" : "macos-arm64_x86_64"
+    },
+    {
+      "swiftToolchainVersion" : "5.7.2 (swiftlang-5.7.2.135.5 clang-1400.0.29.51)",
+      "hash" : "b55cef03fe61685008bc5530101184e8722d662c819947f3a55b9887008c5542",
+      "name" : "LHypothesis_Mac",
+      "container" : "LHypothesis_Mac.xcframework",
+      "identifier" : "macos-arm64_x86_64"
+    }
+  ],
+  "tvOS" : [
+    {
+      "swiftToolchainVersion" : "5.7.2 (swiftlang-5.7.2.135.5 clang-1400.0.29.51)",
+      "hash" : "afb6030a5a679ce492d66957ed0996fe44a8fd113ce50161f7196d03b7bf566e",
+      "name" : "LHypothesis_tvOS",
+      "container" : "LHypothesis_tvOS.xcframework",
+      "identifier" : "tvos-arm64_x86_64-simulator"
+    },
+    {
+      "swiftToolchainVersion" : "5.7.2 (swiftlang-5.7.2.135.5 clang-1400.0.29.51)",
+      "hash" : "ff577595cf0f736eaf7263429f831867cc83b95e7d63e5dbc6876b00736d2998",
+      "name" : "LHypothesis_tvOS",
+      "container" : "LHypothesis_tvOS.xcframework",
+      "identifier" : "tvos-arm64"
+    },
+    {
+      "swiftToolchainVersion" : "5.7.2 (swiftlang-5.7.2.135.5 clang-1400.0.29.51)",
+      "hash" : "afb6030a5a679ce492d66957ed0996fe44a8fd113ce50161f7196d03b7bf566e",
+      "name" : "LHypothesis_tvOS",
+      "container" : "LHypothesis_tvOS.xcframework",
+      "identifier" : "tvos-arm64_x86_64-simulator"
+    },
+    {
+      "swiftToolchainVersion" : "5.7.2 (swiftlang-5.7.2.135.5 clang-1400.0.29.51)",
+      "hash" : "ff577595cf0f736eaf7263429f831867cc83b95e7d63e5dbc6876b00736d2998",
+      "name" : "LHypothesis_tvOS",
+      "container" : "LHypothesis_tvOS.xcframework",
+      "identifier" : "tvos-arm64"
+    }
+  ],
+  "commitish" : "7a3a0627c486cd967be538c1ef161bf00168f038",
+  "iOS" : [
+    {
+      "swiftToolchainVersion" : "5.7.2 (swiftlang-5.7.2.135.5 clang-1400.0.29.51)",
+      "hash" : "e38e6e6186c67c80178eca17067aa54c050dfd50c35f38b1f6343d42e70beb73",
+      "name" : "LHypothesis_Mac",
+      "container" : "LHypothesis_Mac.xcframework",
+      "identifier" : "ios-arm64"
+    },
+    {
+      "swiftToolchainVersion" : "5.7.2 (swiftlang-5.7.2.135.5 clang-1400.0.29.51)",
+      "hash" : "48fc0bbc518a2fb4d8d62d9560529c348d243267156a81399730af44c6183fd4",
+      "name" : "LHypothesis_Mac",
+      "container" : "LHypothesis_Mac.xcframework",
+      "identifier" : "ios-arm64_x86_64-simulator"
+    },
+    {
+      "swiftToolchainVersion" : "5.7.2 (swiftlang-5.7.2.135.5 clang-1400.0.29.51)",
+      "hash" : "e38e6e6186c67c80178eca17067aa54c050dfd50c35f38b1f6343d42e70beb73",
+      "name" : "LHypothesis_Mac",
+      "container" : "LHypothesis_Mac.xcframework",
+      "identifier" : "ios-arm64"
+    },
+    {
+      "swiftToolchainVersion" : "5.7.2 (swiftlang-5.7.2.135.5 clang-1400.0.29.51)",
+      "hash" : "48fc0bbc518a2fb4d8d62d9560529c348d243267156a81399730af44c6183fd4",
+      "name" : "LHypothesis_Mac",
+      "container" : "LHypothesis_Mac.xcframework",
+      "identifier" : "ios-arm64_x86_64-simulator"
+    },
+    {
+      "swiftToolchainVersion" : "5.7.2 (swiftlang-5.7.2.135.5 clang-1400.0.29.51)",
+      "hash" : "03c0a3bd1dc9416e65a7ee982e71125c407b4bc4cdf9fbc4fe97898eaed9354b",
+      "name" : "LHypothesis_iOS",
+      "container" : "LHypothesis_iOS.xcframework",
+      "identifier" : "ios-arm64"
+    },
+    {
+      "swiftToolchainVersion" : "5.7.2 (swiftlang-5.7.2.135.5 clang-1400.0.29.51)",
+      "hash" : "4d2b16207564e4cd60bb47b8fa91586aa711dc96e2468c77d623bbe2668a1c1e",
+      "name" : "LHypothesis_iOS",
+      "container" : "LHypothesis_iOS.xcframework",
+      "identifier" : "ios-arm64_x86_64-simulator"
+    },
+    {
+      "swiftToolchainVersion" : "5.7.2 (swiftlang-5.7.2.135.5 clang-1400.0.29.51)",
+      "hash" : "4d2b16207564e4cd60bb47b8fa91586aa711dc96e2468c77d623bbe2668a1c1e",
+      "name" : "LHypothesis_iOS",
+      "container" : "LHypothesis_iOS.xcframework",
+      "identifier" : "ios-arm64_x86_64-simulator"
+    },
+    {
+      "swiftToolchainVersion" : "5.7.2 (swiftlang-5.7.2.135.5 clang-1400.0.29.51)",
+      "hash" : "03c0a3bd1dc9416e65a7ee982e71125c407b4bc4cdf9fbc4fe97898eaed9354b",
+      "name" : "LHypothesis_iOS",
+      "container" : "LHypothesis_iOS.xcframework",
+      "identifier" : "ios-arm64"
+    },
+    {
+      "swiftToolchainVersion" : "5.7.2 (swiftlang-5.7.2.135.5 clang-1400.0.29.51)",
+      "hash" : "3a94f00b9764a8a3fa76758cb5f7936397d0f48d4d5237609fdfcb9d1e768186",
+      "name" : "LHypothesis_tvOS",
+      "container" : "LHypothesis_tvOS.xcframework",
+      "identifier" : "ios-arm64"
+    },
+    {
+      "swiftToolchainVersion" : "5.7.2 (swiftlang-5.7.2.135.5 clang-1400.0.29.51)",
+      "hash" : "060c2d681b4a6c8427f32d3149989fe892b7a63549530dc8f663463bc3703103",
+      "name" : "LHypothesis_tvOS",
+      "container" : "LHypothesis_tvOS.xcframework",
+      "identifier" : "ios-arm64_x86_64-simulator"
+    },
+    {
+      "swiftToolchainVersion" : "5.7.2 (swiftlang-5.7.2.135.5 clang-1400.0.29.51)",
+      "hash" : "3a94f00b9764a8a3fa76758cb5f7936397d0f48d4d5237609fdfcb9d1e768186",
+      "name" : "LHypothesis_tvOS",
+      "container" : "LHypothesis_tvOS.xcframework",
+      "identifier" : "ios-arm64"
+    },
+    {
+      "swiftToolchainVersion" : "5.7.2 (swiftlang-5.7.2.135.5 clang-1400.0.29.51)",
+      "hash" : "060c2d681b4a6c8427f32d3149989fe892b7a63549530dc8f663463bc3703103",
+      "name" : "LHypothesis_tvOS",
+      "container" : "LHypothesis_tvOS.xcframework",
+      "identifier" : "ios-arm64_x86_64-simulator"
+    }
+  ]
+}

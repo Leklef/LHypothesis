@@ -45,14 +45,15 @@ platform :ios do
     )
 	  ensure_git_status_clean
     pod_lib_lint(allow_warnings: true, fail_fast: true, platforms: 'ios')
+    carthage_release
     version = version_bump_podspec(path: podspecName, bump_type: type)
     git_add(path: podspecName)
     git_commit(path: [podspecName], message: "#{version} release")
-    push_to_git_remote
+    push_to_git_remote(tags: false, set_upstream: true)
   end
 
   def carthage_release
     carthage(command: "build", platform: "Mac,iOS,tvOS", configuration: "Release", use_xcframeworks: true, no_skip_current: true)
-    git_add(path: './Carthage/*')
+    git_add(path: './Carthage/**')
   end
 end

@@ -1,0 +1,4 @@
+framework module LHypothesis_Mac {
+  header "LHypothesis_Mac-Swift.h"
+  requires objc
+}
